@@ -6,7 +6,7 @@ void main()
 	printf("Please enter your password:\n");
 	scanf("%s", password);
 
-	if(strcmp(password, "WrightCEG7420"))
+	if(strcmp(password, "WrightCEG7420")==0)
 	{
 		printf("Correct Password!\n");
 	}
