@@ -16,8 +16,10 @@ while allSymbols.hasNext():
     #print(sym_name_str + " : " + sym_type_str + ":" + sym_address_str); 
 
     if "sscanf" in sym_name_str and sym_type_str == "Function": 
-        print(sym.getName() + " : " + sym.getSymbolType().toString()) 
+        #print(sym.getName() + " : " + sym.getSymbolType().toString()) 
         refs = sym.getReferences()
         for r in refs:
-            print("from: " + r.getFromAddress().toString() + " to: " + r.getToAddress().toString() + " isCall: " + str(r.getReferenceType().isCall()) + " isJump: " +  str(r.getReferenceType().isJump()))
+            if r.getReferenceType().isCall() and r.getFromAddress() is not None:
+                f = getFunctionContaining(r.getFromAddress()); 
+                print(sym.getName() + "@" + sym_address_str + " ref-from the function@" + f.getEntryPoint().toString() + " with name:  " + f.getName() + " isThunk? " + str(f.isThunk()))
     
