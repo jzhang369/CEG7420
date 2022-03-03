@@ -10,10 +10,14 @@ while allSymbols.hasNext():
     sym = allSymbols.next()
     sym_name_str = sym.getName()
     sym_type_str = sym.getSymbolType().toString()
+    sym_address_str = sym.getAddress().toString()
 
-    if "sscanf" in sym_name_str and sym_type_str == "Function": 
-        print(sym.getName() + " : " + sym.getSymbolType().toString()) 
-        refs = sym.getReferences()
-        for r in refs:
-            print("from: " + r.getFromAddress().toString() + " to: " + r.getToAddress().toString() + " isCall: " + str(r.getReferenceType().isCall()) + " isJump: " +  str(r.getReferenceType().isJump()))
+    if "sscanf" in sym_name_str:
+        print(sym_name_str + " : " + sym_type_str + ":" + sym_address_str); 
+
+    #if "sscanf" in sym_name_str and sym_type_str == "Function": 
+    #    print(sym.getName() + " : " + sym.getSymbolType().toString()) 
+    #    refs = sym.getReferences()
+    #    for r in refs:
+    #        print("from: " + r.getFromAddress().toString() + " to: " + r.getToAddress().toString() + " isCall: " + str(r.getReferenceType().isCall()) + " isJump: " +  str(r.getReferenceType().isJump()))
     
