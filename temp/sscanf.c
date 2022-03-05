@@ -13,9 +13,26 @@ int main()
     printf("your input is %s\n", input);
 
     sscanf(input, "%s %d %d", month, &day, &year); 
-    printf("Year: %d\n", year); 
-    printf("Month: %s\n", month); 
-    printf("Day: %d\n", day); 
+    printf("Year1: %d\n", year); 
+    printf("Month1: %s\n", month); 
+    printf("Day1: %d\n", day); 
+
+
+    int val1 = sscanf(input, "%s %d %d", month, &day, &year); 
+    printf("Year2: %d\n", year); 
+    printf("Month2: %s\n", month); 
+    printf("Day2: %d\n", day); 
+
+
+
+    int val2 = sscanf(input, "%s %d %d", month, &day, &year);
+    if(val2 == 3)
+    {
+        printf("Year3: %d\n", year); 
+        printf("Month3: %s\n", month); 
+        printf("Day3: %d\n", day); 
+    }
+
 
     //this is the patched code:
     /*
