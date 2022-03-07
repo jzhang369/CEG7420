@@ -3,7 +3,7 @@
 # @category: CEG7420.Demo
 # @author: Junjie Zhang
 
-from ghidra.program.model.pcode import PcodeOp
+from ghidra.program.model.pcode import *
 from ghidra.app.decompiler import *
 
 def analyze(plist, func, instAddr):
@@ -19,7 +19,7 @@ def analyze(plist, func, instAddr):
 
 
 def analyze2(program, func, sym):
-    print("I am here for " + sym.getAddress().toString())
+    print("---------------")
     decomp = DecompInterface()
     decomp.openProgram(program)
     decomp_results = decomp.decompileFunction(func, 30, None)
@@ -33,9 +33,32 @@ def analyze2(program, func, sym):
         print("highFunction is none here")
     else:
         pcode_seq = results_highFunction.getPcodeOps()
-        for op in pcode_seq:
-            if op.opcode == PcodeOp.CALL:
-                print(op.toString())
+        while pcode_seq.hasNext():
+            op = pcode_seq.next()
+            #print("Example: " + op.toString())
+            if op.getOpcode() == PcodeOp.CALL:
+                #print(op.toString())
+                output = op.getOutput()
+                inputs = op.getInputs()
+                input0 = inputs[0]
+                if input0.getOffset() == sym.getAddress().getOffset():
+                    isVulnerable = True
+                    if output is None:
+                        isVulnerable = True
+                        #print("Warning: @" + op.getSeqnum().getTarget().toString() + " " + op.toString())
+                    else:
+                        #print("More Analysis: @" + op.getSeqnum().getTarget().toString() + " " + op.toString())
+                        descendants = output.getDescendants()
+                        
+                        for d in descendants:
+                            if d.getOpcode() == PcodeOp.INT_EQUAL:
+                                isVulnerable = False
+                                break
+                    
+                    if isVulnerable:
+                        print("Possible Vulnerability @" + op.getSeqnum().getTarget().toString() + " " + op.toString())
+
+
 
 
 
