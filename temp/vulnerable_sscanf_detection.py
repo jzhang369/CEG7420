@@ -5,6 +5,7 @@
 
 from ghidra.program.model.pcode import *
 from ghidra.app.decompiler import *
+from ghidra.program.model.symbol import SymbolUtilities
 
 def analyze(plist, func, instAddr):
     inst = plist.getInstructionAt(instAddr)
@@ -35,7 +36,7 @@ def analyze2(program, func, sym):
         pcode_seq = results_highFunction.getPcodeOps()
         while pcode_seq.hasNext():
             op = pcode_seq.next()
-            #print("Example: " + op.toString())
+            print("Example: " + op.toString())
             if op.getOpcode() == PcodeOp.CALL:
                 #print(op.toString())
                 output = op.getOutput()
@@ -68,6 +69,14 @@ program = currentProgram
 plist = program.getListing()
 symbolTable = program.getSymbolTable()
 allSymbols = symbolTable.getAllSymbols(False)
+
+
+symbol = SymbolUtilities.getLabelOrFunctionSymbol(program, "main", None)
+
+if symbol != None:
+    print("Found: " + symbol.getName() + " " + symbol.getSymbolType().toString())
+else:
+    print("DID NOT FIND ANYTHING HERE")
 
 while allSymbols.hasNext():
     sym = allSymbols.next()
