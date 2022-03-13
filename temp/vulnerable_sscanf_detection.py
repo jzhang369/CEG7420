@@ -3,61 +3,59 @@
 # @category: CEG7420.Demo
 # @author: Junjie Zhang
 
+import re
 from ghidra.program.model.pcode import *
 from ghidra.app.decompiler import *
-from ghidra.program.model.symbol import SymbolUtilities
-
-def analyze(plist, func, instAddr):
-    inst = plist.getInstructionAt(instAddr)
-    pcode_seq = inst.getPcode()
-    print("@" + instAddr.toString() + ":")
-    for op in pcode_seq: 
-        if op.getOpcode() == PcodeOp.CALL:
-            print(op.toString())
-            output = op.getOutput()
-            if output is None:
-                print("The output is none")
+from ghidra.program.model.symbol import Symbol
+from ghidra.program.model.symbol import SymbolType
 
 
-def analyze2(program, func, sym):
+def getSymbols(program, regexr):
+#Given a programDB and a regular expression, return all symbols whose names match with the given regexr
+    symbolTable = program.getSymbolTable()
+    allSymbols = symbolTable.getAllSymbols(False)
+    results = filter(lambda symbol: re.search(regexr, symbol.getName()), allSymbols)
+    return results
+        
+
+
+def analyze(decomp, func, symbols):
     print("---------------")
-    decomp = DecompInterface()
-    decomp.openProgram(program)
+ 
     decomp_results = decomp.decompileFunction(func, 30, None)
-
     if decomp_results is None:
-        print("decomp result is none here")
+        return None
 
     results_highFunction = decomp_results.getHighFunction()
-
     if results_highFunction is None:
-        print("highFunction is none here")
-    else:
-        pcode_seq = results_highFunction.getPcodeOps()
-        while pcode_seq.hasNext():
-            op = pcode_seq.next()
-            print("Example: " + op.toString())
-            if op.getOpcode() == PcodeOp.CALL:
-                #print(op.toString())
-                output = op.getOutput()
-                inputs = op.getInputs()
-                input0 = inputs[0]
-                if input0.getOffset() == sym.getAddress().getOffset():
-                    isVulnerable = True
-                    if output is None:
-                        isVulnerable = True
-                        #print("Warning: @" + op.getSeqnum().getTarget().toString() + " " + op.toString())
-                    else:
-                        #print("More Analysis: @" + op.getSeqnum().getTarget().toString() + " " + op.toString())
-                        descendants = output.getDescendants()
-                        
-                        for d in descendants:
-                            if d.getOpcode() == PcodeOp.INT_EQUAL:
-                                isVulnerable = False
-                                break
-                    
-                    if isVulnerable:
-                        print("Possible Vulnerability @" + op.getSeqnum().getTarget().toString() + " " + op.toString())
+        return None
+
+    symbols_offsets = set(s.getAddress().getOffset() for s in symbols)
+    pcode_seq = results_highFunction.getPcodeOps() 
+    pcode_calls = filter(lambda p: p.getOpcode() == PcodeOp.CALL and p.getInputs()[0].getOffset() in symbols_offsets,  pcode_seq)
+
+    vulResults = set()
+
+    for op in pcode_calls:
+        #print(op.getSeqnum().getTarget().toString() + " " + op.toString())
+        if op.getOutput() is None:
+            vulResults.add(op.getSeqnum().getTarget())
+            print("Warning: a possible vulnerability @" + op.getSeqnum().getTarget().toString() + " since the output of sscanf is not preserved")
+        else:
+            isVul = True 
+            output = op.getOutput()
+            des = output.getDescendants()
+            for i in des:
+                if i.getOpcode() == PcodeOp.INT_EQUAL:
+                    isVul = False
+            if isVul:
+                vulResults.add(op.getSeqnum().getTarget())
+                print("Warning: a possible vulnerability @" + op.getSeqnum().getTarget().toString() + " since the output of sscanf is not assessed")
+
+
+    return vulResults
+
+   
 
 
 
@@ -70,32 +68,26 @@ plist = program.getListing()
 symbolTable = program.getSymbolTable()
 allSymbols = symbolTable.getAllSymbols(False)
 
+allSymbols_sscanf = getSymbols(program, "sscanf$")
+allSymbols_sscanf_call = filter(lambda symbol: symbol.getSymbolType() == SymbolType.FUNCTION, allSymbols_sscanf)
 
-symbol = SymbolUtilities.getLabelOrFunctionSymbol(program, "main", None)
+fdict={}
+for symbol in allSymbols_sscanf_call:
+    refs = symbol.getReferences()
+    for r in refs:
+        if r.getReferenceType().isCall() and r.getFromAddress() is not None:
+            f = getFunctionContaining(r.getFromAddress()); 
+            if f and (not f.isThunk()):
+                if f in fdict:
+                    fdict[f].add(symbol)
+                else:
+                    fdict[f] = set()
 
-if symbol != None:
-    print("Found: " + symbol.getName() + " " + symbol.getSymbolType().toString())
-else:
-    print("DID NOT FIND ANYTHING HERE")
 
-while allSymbols.hasNext():
-    sym = allSymbols.next()
-    sym_name_str = sym.getName()
-    sym_type_str = sym.getSymbolType().toString()
-    sym_address_str = sym.getAddress().toString()
+#Now get the decomp ready
+decomp = DecompInterface()
+decomp.openProgram(program)
 
-    #if "sscanf" in sym_name_str:
-    #print(sym_name_str + " : " + sym_type_str + ":" + sym_address_str); 
+for k, v in fdict.items():
+    analyze(decomp, k, v)
 
-    if "sscanf" in sym_name_str and sym_type_str == "Function": 
-        #print(sym.getName() + " : " + sym.getSymbolType().toString()) 
-        refs = sym.getReferences()
-        for r in refs:
-            if r.getReferenceType().isCall() and r.getFromAddress() is not None:
-                f = getFunctionContaining(r.getFromAddress()); 
-                if not f.isThunk():
-                    #Now this is the immeidate caller of sscanf that is of our interest
-                    #print(sym.getName() + "@" + sym_address_str + " ref-from the function@" + f.getEntryPoint().toString() + " with name:  " + f.getName() + " isThunk? " + str(f.isThunk()))
-                    #analyze(plist, f, r.getFromAddress())
-                    print(sym.getName() + "@" + sym_address_str + " or @" + hex(sym.getAddress().getOffset()) + " ref-from the function@" + f.getEntryPoint().toString() + " with name:  " + f.getName())
-                    analyze2(program, f, sym)
