@@ -97,7 +97,7 @@ for inst in instructionIterator:
 
 ### **How to Enumerate All Instructions in a Function?**
 
-**Option 1: ** Enumerate all instructions starting from the first instruction of this function, and check whether this instruction's address is inside the body of this function. 
+**Option 1:** Enumerate all instructions starting from the first instruction of this function, and check whether this instruction's address is inside the body of this function. 
 
 ```python
 # display all instructions inside the function indicated by your cursor. 
