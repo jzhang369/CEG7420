@@ -115,3 +115,119 @@ else:
 
 
 ``Option 2:`` Using `getInstructions(AddressSetView addrSet, boolean forward)` of the `listing` object. 
+
+```python
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
+	print(myFunc)
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(fbody, True) # myListing.getInstructions(AddressSetView, Boolean) will return instructions that are inside this set of addresses
+	for inst in instructionIterator:
+		print(inst)
+```
+
+### **How to Retrieve Information from an Instruction?**
+
+Potentially useful information for an instruction:
+ 
++ mnemonic: `getMnemonicString()`
+  + type
++ operands: `getInputObjects()`
+  + value
+  + type
++ address: `getAddress()`, `getMinAddress()`, and `getMaxAddress()`
++ size:	`getLength()`
++ Fall-Through: the fall-through of an instruction refers to the next sequential instruction in memory that would be executed if there is no explicit change in control flow. 
+  + For most linear instructions (`mov`, `add`, and etc.), execution naturally proceeds to the next instruction.
+  + For branching instructions, such as `JMP`, `CALL`, and `RET`, execution may deviate from the sequential flows. 
+
+```python
+# This example is to count the occurence for each mnemonic string showing up in this body of the current function. 
+myDict = {}
+
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
+	print(myFunc)
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(fbody, True)
+	for inst in instructionIterator:
+		mnemonic = inst.getMnemonicString()
+		if mnemonic in myDict:
+			myDict[mnemonic] = myDict[mnemonic] + 1
+		else:
+			myDict[mnemonic] = 1
+
+print(myDict)
+```
+
+
+
+```python
+# get address, min address, max address, and the length of an instruction
+# the address is the same to the min address
+# the length of an instruction is the number of bytes for this instruction
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
+	print(myFunc)
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(fbody, True)
+	for inst in instructionIterator:
+		operands = inst.getInputObjects()
+		print(inst)
+		print("address: {}, min_address: {}, max_address: {}, size: {}".format(inst.getAddress(), inst.getMinAddress(), inst.getMaxAddress(), inst.getLength()))
+```
+
+
+```python
+# get the fallthrough instructions and non-fallthrough/target instructions for J, CALL, and RET instructions.
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
+	print(myFunc)
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(fbody, True)
+	for inst in instructionIterator:
+		if inst.getMnemonicString().startswith("J") or inst.getMnemonicString().startswith("CALL") or inst.getMnemonicString().startswith("RET"):
+			print("{}\t{}".format(inst.getAddress(), inst))
+			addrFallThrough = inst.getFallThrough()
+			if addrFallThrough:
+				fallThroughtInst = getInstructionAt(addrFallThrough)
+				print("		fallthrough to: {}\t{}".format(addrFallThrough, fallThroughtInst))
+			addrOtherThanFallThrough = inst.getFlows()
+			for one in addrOtherThanFallThrough:
+				notFallThroughtInst = getInstructionAt(one)
+				print("		notfallthrough/target to: {}\t{}".format(one, notFallThroughtInst))
+
+```
+
+### **Application: Enumerate All Callees of the Current Function**
+
+**Option 1:** Parse each instruction, get operands, and find the address in the operand.
+
+```python
+# Give a try by yourself!
+```
+
+
+
+**Option 2:** Using *flows* to get the address of the callee.
+
+```python
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
+	print(myFunc)
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(fbody, True)
+	for inst in instructionIterator:
+		if inst.getMnemonicString().startswith("CALL"):
+			addrOtherThanFallThrough = inst.getFlows() # this gives the target of the instruction
+			for one in addrOtherThanFallThrough:
+				callee = getFunctionAt(one)
+				print("		callee: {}".format(callee))
+
+
+```
