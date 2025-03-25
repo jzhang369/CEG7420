@@ -203,12 +203,24 @@ if myFunc:
 
 ```
 
-### **Application: Enumerate All Callees of the Current Function**
+### **Application 1: Enumerate All Callees of the Current Function**
 
 **Option 1:** Parse each instruction, get operands, and find the address in the operand.
 
 ```python
-# Give a try by yourself!
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
+	print(myFunc)
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(fbody, True)
+	for inst in instructionIterator:
+		if inst.getMnemonicString().startswith("CALL"):
+			# get the operand, and the operand will be the entry address of the callee
+			# and then you can use getFunctionAt(addr) to retrieve the callee information. 
+			calleeAddr = inst.getOpObjects(0)[0]
+			callee = getFunctionAt(calleeAddr)
+			print("{} at {} calls {}.".format(myFunc, inst.getAddress(), callee))
 ```
 
 
@@ -230,4 +242,53 @@ if myFunc:
 				print("		callee: {}".format(callee))
 
 
+```
+
+### **Application 2: Enumerate All Callers of the Current Function**
+
+**Option 1**: 
++ Enumerate all instructions, and identify `CALL` instructions, 
++ For a `CALL` instruction, check whehter its operand matches with the address of the current function. 
+  + If so, this instruction is a `CALL` instruction to the current function, and the function that contains that instruction will be a caller of the current instruction. 
+  + Get the function that contains the address of that instruction. 
+
+```python
+callers = set()
+
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	# getInstructions returns an iterator of instructions inside this binary
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(True)
+	for inst in instructionIterator:
+		if inst.getMnemonicString().startswith("CALL"):
+			calleeAddr = inst.getOpObjects(0)[0]
+			if myFunc.getEntryPoint() == calleeAddr:
+				callerFunc = getFunctionContaining(inst.getAddress())
+				print("Caller: {} at {} calls {}".format(callerFunc, inst.getAddress(), myFunc))
+				callers.add(callerFunc)
+
+print(callers)
+```
+
+
+**Option 2**: Use `getFlows()` instead of `getOpObjects(0)[0]`, which makes the code more readable. 
+
+```python
+callers = set()
+
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	# getInstructions returns an iterator of instructions inside this binary
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(True)
+	for inst in instructionIterator:
+		if inst.getMnemonicString().startswith("CALL"):
+			for calleeAddr in inst.getFlows():
+				if myFunc.getEntryPoint() == calleeAddr:
+					callerFunc = getFunctionContaining(inst.getAddress())
+					print("Caller: {} at {} calls {}".format(callerFunc, inst.getAddress(), myFunc))
+					callers.add(callerFunc)
+
+print(callers)
 ```
