@@ -103,11 +103,82 @@ if myFunc:
 
 ### **Application 1: Enumerate All Callees of the Current Function**
 
+```python
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
+	print(myFunc)
+	myListing = currentProgram.getListing()
+	instructionIterator = myListing.getInstructions(fbody, True)
+	for inst in instructionIterator:
+		addr = inst.getAddress()
+		for ref in getReferencesFrom(addr):
+			if ref.getReferenceType().isCall():
+				calleeAddr = ref.getToAddress()
+				calleeFunc = getFunctionAt(calleeAddr)
+				print("{} at {} calls {}".format(myFunc, addr, calleeFunc))
+```
+
+
 ### **Application 2: Enumerate All Callers of the Current Function**
+
+```python
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	addr = myFunc.getEntryPoint()
+	for ref in getReferencesTo(addr):
+		if ref.getReferenceType().isCall():
+			callerAddr = ref.getFromAddress()
+			callerFunc = getFunctionContaining(callerAddr)
+			print("{} is called by {} at {}".format(myFunc, callerFunc, callerAddr))
+
+```
 
 
 ### **Application 3: Identify All Functions with Loop(s)**
 
+```python
+funcsWithLoop = set()
+myListing = currentProgram.getListing()
+fm = currentProgram.getFunctionManager()
+allFuncs = fm.getFunctions(True)
+for f in allFuncs:
+    f_body = f.getBody()
+    instructionIterator = myListing.getInstructions(f_body, True)
+    for inst in instructionIterator:
+    	jumpRefs = filter(lambda x: x.getReferenceType().isJump() and f_body.contains(x.getToAddress()) and x.getToAddress().subtract(inst.getAddress()) < 0, getReferencesFrom(inst.getAddress()))
+    	if len(list(jumpRefs)) > 0:
+    		funcsWithLoop.add(f)
+
+print("Functions with loop:")
+for f in funcsWithLoop:
+	print(f)
+
+```
+
+
 ### **Application 4: Identify All Recursion Functions**
+
+```python
+funcsRecursion = set()
+myListing = currentProgram.getListing()
+fm = currentProgram.getFunctionManager()
+allFuncs = fm.getFunctions(True)
+for f in allFuncs:
+	entryAddr = f.getEntryPoint()
+	f_body = f.getBody()
+	instructionIterator = myListing.getInstructions(f_body, True)
+	for inst in instructionIterator:
+		callRefs = filter(lambda x: x.getReferenceType().isCall() and x.getToAddress().equals(entryAddr), getReferencesFrom(inst.getAddress()))
+    	if len(list(callRefs)) > 0:
+    		funcsRecursion.add(f)
+
+print("Recursion Functions:")
+for f in funcsRecursion:
+	print(f)
+```
+
+
+### **Discussion: What is the `INDIRECTION` reference to a function?**
 
 
