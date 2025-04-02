@@ -114,7 +114,7 @@ else:
 ```
 
 
-``Option 2:`` Using `getInstructions(AddressSetView addrSet, boolean forward)` of the `listing` object. 
+**Option 2:** Using `getInstructions(AddressSetView addrSet, boolean forward)` of the `listing` object. 
 
 ```python
 myFunc = getFunctionContaining(currentAddress)
