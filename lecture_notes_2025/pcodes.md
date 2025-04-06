@@ -108,9 +108,9 @@ else:
 
 ## **Where to Find More Information?**
 
-docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOp.html
+/docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOp.html
 
-docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOpAST.html
+/docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOpAST.html
 
 /docs/languages/index.html
 
