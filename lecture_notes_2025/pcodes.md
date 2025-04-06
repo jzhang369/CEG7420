@@ -94,6 +94,34 @@ graph BT
 
 ## **P-Code Syntax**
 
+A p-code operation is the analog of a machine instruction. 
++ A Machine Instruction
+  + **opcode**: the action taken by this instruction (e.g., `ADD`, `JMP`, and etc.). 
+  + **oprand**: the input(s) and output of this instruction (e.g., a register, a memory address, and etc.)
+  + **Side Effects**: a machine instruction may have side effects (e.g., by implicitly changing flag registers.)
++ A p-code operation
+  + **opcode**: the action taken by this p-code operation
+  + **varnode**: the input(s) and output of this p-code operation. 
+  + **Side Effects**: for almost all p-code operations, only the output varnode can have its value modified; there are no indirect effects of the operation. 
+
+
+
+## **Mapping Between Assembly Instructions and P-Code Operations**
+
+### **From Assembly to P-Code**
+
+### **From P-Code to Assembly**
+Every p-code operation is associated with the original machine/assembly instruction where it originates from. It should be made clear that one machine instruction is typically translated into one p-code operation or a sequence of p-code instructions. Each p-code operation is uniquely identified by its **sequence number**. 
+1. Each p-code operation is associated with **the address** of the original processor instruction it originates from.  
+1. For a single instruction, a **1-up counter**, starting at zero, is used to enumerate the multiple p-code operations involved in its translation. 
+
+The address and counter as a pair are referred to as the p-code op's unique **sequence number**. 
+
+Similar to machine/assembly instructions, control-flow of p-code operations generally follows sequence number order. 
++ When execution of all p-code for one instruction is completed, if the instruction has fall-through semantics, p-code control-flow picks up with the first p-code operation in sequence corresponding to the instruction at the fall-through address. Similarly, if a p-code operation results in a control-flow branch, the first p-code operation in sequence executes at the destination address.
+
+
+
 
 ## **Working with PCodess**
 
