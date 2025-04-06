@@ -41,8 +41,28 @@ Ghidra defines two types of p-codes that share the same syntax but differ fundam
     - In Static Single Assignment (SSA) form
     - Aids in reconstructing functions, loops, and conditionals.
 
+```mermaid
+graph BT
+    subgraph ASM[Hardware-Specific ASM]
+        A1[x86]
+        A2[ARM]
+        A3[MIPS]
+        A4[PowerPC]
+    end
 
+    B[SLEIGH Language Translator]
+    C[Raw P-code]
+    D[Decompiler Engine]
+    E[Refined P-code]
 
+    A1 --> B
+    A2 --> B
+    A3 --> B
+    A4 --> B
+    B --> C
+    C --> D
+    D --> E
+```
 
 
 **Summary Table - Comparison Between Raw and Refined P-codes**
