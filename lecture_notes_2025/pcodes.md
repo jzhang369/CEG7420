@@ -54,6 +54,7 @@ graph BT
     C[Raw P-code]
     D[Decompiler Engine]
     E[Refined P-code]
+    F[Decompiled C/C++ Code]
 
     A1 --> B
     A2 --> B
@@ -62,6 +63,7 @@ graph BT
     B --> C
     C --> D
     D --> E
+    E --> F
 ```
 
 
