@@ -117,3 +117,79 @@ for inst in instructionIterator:
 **Question:** Are these p-code operations raw p-codes or refined p-codes?
 
 **Answer:** They are raw p-codes directly translated from assembly instructions. 
+
+As we can find from the outputs, each of these p-code operations include a p-code opcode/operator, an output if existing, and zero or more inputs. 
+
+### **P-Code Operator/Opcode**
+
+From [/docs/languages/index.html](https://spinsel.dev/assets/2020-06-17-ghidra-brainfuck-processor-1/ghidra_docs/language_spec/html/pcodedescription.html), you can find the detailed description of various p-code opcodes, which will be essential to the understanding of semantics of p-code operations. 
+
++ COPY
++ LOAD
++ STORE
++ BRANCH
++ CBRANCH
++ BRANCHIND
++ CALL
++ CALLIND
++ INT_EQUAL
++ INT_NOTEQUAL
++ INT_LESS: This is an unsigned integer comparison operator.
++ INT_SLESS: This is a signed integer comparison operator.
++ INT_LESSEQUAL: This is an unsigned integer comparison operator.
++ INT_SLESSEQUAL: This is a signed integer comparison operator. 
+
+Here are some methods in `PcodeOp` that retrieve information of p-code operators/opcodes. 
++ `getMnemonic()`: get the string representation of the pcode opcode. 
++ `getMnemonic(int op)`: get the string representation of for the integer value of a specific pcode opcode.
++ `getOpcode()`: get the integer value for this pcode opcode. 
++ `getOpcode(String s)`: get the integer value for a specific pcode opcode in string.
+
+```python
+# For P-Code Demo
+# @category: CEG7420.Demo
+# @author: Junjie Zhang
+
+cnt = 0
+myListing = currentProgram.getListing()
+instructionIterator = myListing.getInstructions(True)
+for inst in instructionIterator:
+    
+    cnt += 1
+    if cnt > 1000:
+      break #only display the first few instructions. 
+
+    pcodeList = inst.getPcode()
+    print("{}".format(inst))
+    for pcode in pcodeList:
+      print("\t{}".format(pcode))
+      print("\t\topcode in integer and in string: {}, {}".format(pcode.getOpcode(), pcode.getMnemonic()))
+
+print("the opcode string for 1 is {}".format(pcode.getMnemonic(1)))
+print("the opcode integer for INT_EQUAL is {}".format(pcode.getOpcode("INT_EQUAL")))
+```
+
+
+You can use the staic filds in `PCodeOp` class to get p-code operations with a specific opcode type, e.g., `PcodeOp.CALL`. Please do not forget to import `PcodeOp` from the package.  
+
+```python
+# For P-Code Demo
+# @category: CEG7420.Demo
+# @author: Junjie Zhang
+
+#to only print p-code operations that are CALL p-code operators
+from ghidra.program.model.pcode import PcodeOp
+cnt = 0
+myListing = currentProgram.getListing()
+instructionIterator = myListing.getInstructions(True)
+for inst in instructionIterator:
+    pcodeList = inst.getPcode()
+    print("{}".format(inst))
+    for pcode in pcodeList:
+    	if pcode.getOpcode() == PcodeOp.CALL:
+    		print("\t{}".format(pcode))
+```
+
+
+
+### **P-Code Varnodes**
