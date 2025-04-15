@@ -193,3 +193,143 @@ for inst in instructionIterator:
 
 
 ### **P-Code Varnodes**
+
+Each input or output is a **varnode**, where **a varnode is a triple of an address space, an offset into the space, and a size. It refers to a contiguous seqeunce of bytes (defined by the size) startting from the offset in address space**.
+
+Ghidra defines four types of address spaces:
++ **ram**: this varnode is in memory. Memory addressable by the program. For example, `BRANCH` and `CBRANCH` can use it, to indicate the address of the execution target.
++ **register**: this varnode is in a register.
++ **constant**: this varnode is a constant value (i.e., an immediate value). 
++ **unique** (a.k.a., temporary): this varnode is a temporary node and it does not exist anywhere.
+
+Here is a code snippet to explore varnodes. 
+
+```python
+# For P-Code Demo
+# @category: CEG7420.Demo
+# @author: Junjie Zhang
+
+#to explore varnode methods and display the information
+from ghidra.program.model.pcode import PcodeOp
+cnt = 0
+myListing = currentProgram.getListing()
+instructionIterator = myListing.getInstructions(True)
+for inst in instructionIterator:
+    pcodeList = inst.getPcode()
+    print("{}".format(inst))
+    for pcode in pcodeList:
+    	print("\t{}".format(pcode))
+    	output = pcode.getOutput()
+    	inputs = pcode.getInputs()
+    	if output:
+    		print("\t\toutput: {}".format(output))
+    		print("\t\t\tRam/Address Space?: {}".format(output.isAddress()))
+    		print("\t\t\tConstant Space?: {}".format(output.isConstant()))
+    		print("\t\t\tRegister Space?: {}".format(output.isRegister()))
+    		print("\t\t\tTemporary/Unique Space?: {}".format(output.isUnique()))
+    		print("\t\t\tOffset: {}, with size: {}".format(output.getOffset(), output.getSize()))
+    		print("\t\t\tInteger Value for The Space: {}".format(output.getSpace()))
+    	for vn in inputs:
+    		print("\t\tinput: {}".format(vn))
+    		print("\t\t\tRam/Address Space?: {}".format(vn.isAddress()))
+    		print("\t\t\tConstant Space?: {}".format(vn.isConstant()))
+    		print("\t\t\tRegister Space?: {}".format(vn.isRegister()))
+    		print("\t\t\tTemporary/Unique Space?: {}".format(vn.isUnique()))
+    		print("\t\t\tOffset: {}, with size: {}".format(vn.getOffset(), vn.getSize()))
+    		print("\t\t\tInteger Value for The Space: {}".format(vn.getSpace()))
+```
+
+
+## Mapping Between Assembly Instructions and P-Code Operations
+
+### **From Assembly to P-Code**
+
+We have explored this in previous sections, i.e., using the `getPcode()` method of the `instruction` class. For example, you can use the following code snippet (incomplete). 
+
+```python
+# inst is an assembly instruction
+for inst in instructionIterator:
+    #using getPcode(), you will get a list of pcode operations.
+    pcodeList = inst.getPcode()  
+    print("{}".format(inst))
+    for pcode in pcodeList:
+```
+
+### **From P-Code to Assembly**
+
+Every p-code operation is associated with the original machine/assembly instruction where it originates from. It should be made clear that one machine instruction is typically translated into one p-code operation or a sequence of p-code operations. Each p-code operation is uniquely identified by its **sequence number**. 
+
+1. A sequence number contains **the address** of the original assembly instruction the pcode operation originates from.  
+1. A sequence number also contains a counter. For a single instruction, a **1-up counter**, starting at zero, is used to enumerate the multiple p-code operations involved in its translation.
+
+```python
+# For P-Code Demo
+# @category: CEG7420.Demo
+# @author: Junjie Zhang
+
+#for a pcode operation, you can find out the address of the assembly instruction, from which this pcode is corresponding to
+from ghidra.program.model.pcode import PcodeOp
+cnt = 0
+myListing = currentProgram.getListing()
+instructionIterator = myListing.getInstructions(True)
+for inst in instructionIterator:
+    pcodeList = inst.getPcode()
+    print("{} : {}".format(inst.getAddress(), inst))
+    for pcode in pcodeList:
+    	print("\t{}".format(pcode))
+    	seq = pcode.getSeqnum()
+    	print("\t\tseq number: {}".format(seq))
+    	print("\t\t\taddress of the assembly instruction this pcode is from: {}".format(seq.getTarget()))	
+
+```
+## Refined P-Code
+
+For all examples we have discussed before this section, they are for **raw p-code** or **low p-code**. Here we will focus on refined p-code. 
+
+Refined p-codes are represented in **Static Single Assignment (SSA)** form; raw p-codes are NOT represented in SSA. A key property of SSA is that:
+
+- Ensures **every variable is assigned exactly once**.
+- Introduces new unique versions (e.g., `tmp1`, `tmp2`, etc.) for each assignment.
+- Makes **data flow analysis**, **value tracking**, and **optimization** easier.
+  
+SSA simplifies the reasoning about program state, facilitating taint analysis and symbolic execution. 
+
+SSA Examples (Yes/No?):
+
+```python
+# Yes or No? 
+# No, because x has been written for 3 times. 
+x = 5
+x = x + 2
+x = x * 3
+```
+
+```python
+# Yes or No?
+# Yes, since no variable is written for more than once. 
+x1 = 5
+x2 = x1 + 2
+x3 = x2 * 3
+```
+
+```python
+# Yes or No?
+# No, since x has been written twice. 
+if (cond):
+    x = 1
+else:
+    x = 2
+    y = x + 3
+```
+
+
+```python
+# Yes or No?
+# Yes, since no variable is written for more than once.
+if (cond):
+    x1 = 1
+else:
+    x2 = 2
+    x3 = phi(x1, x2)
+    y1 = x3 + 3
+```
