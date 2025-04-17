@@ -201,6 +201,7 @@ Ghidra defines four types of address spaces:
 + **register**: this varnode is in a register.
 + **constant**: this varnode is a constant value (i.e., an immediate value). 
 + **unique** (a.k.a., temporary): this varnode is a temporary node and it does not exist anywhere.
++ **stack**: for varnodes in refined p-code instructions. 
 
 Here is a code snippet to explore varnodes. 
 
@@ -286,6 +287,7 @@ for inst in instructionIterator:
 
 For all examples we have discussed before this section, they are for **raw p-code** or **low p-code**. Here we will focus on refined p-code. 
 
+### SSA 
 Refined p-codes are represented in **Static Single Assignment (SSA)** form; raw p-codes are NOT represented in SSA. A key property of SSA is that:
 
 - Ensures **every variable is assigned exactly once**.
@@ -332,4 +334,162 @@ else:
     x2 = 2
     x3 = phi(x1, x2)
     y1 = x3 + 3
+```
+
+### Retrieving Refined P-Code Using Ghidra
+
+You will need to firstly decompile a function before you can retrieve refined p-code instructions from the binary. This is fundamentally different from raw p-code instructions, which can be directly translated from assembly instructions. 
+
+```python
+# For Refined P-Code Demo
+# @category: CEG7420.Demo
+# @author: Junjie Zhang
+
+from ghidra.app.decompiler import *
+
+# We will get refined p-code for the current function.
+func = getFunctionContaining(currentAddress)
+myDecomp = DecompInterface()
+myDecomp.openProgram(currentProgram)
+
+if func is None:
+    print("No function contains this address.")
+    exit()
+
+decomp_results = myDecomp.decompileFunction(func, 30, monitor)
+if decomp_results is None:
+    print("Fail to decompile this function.")
+    exit()
+
+results_highFunction = decomp_results.getHighFunction()
+if results_highFunction is None:
+    print("Fail to get the high function.")
+    exit()
+
+pcode_seq = results_highFunction.getPcodeOps() # This pcode_seq is refined pcode!
+cnt = 0
+for op in pcode_seq:
+    print("{}".format(op.toString()))
+```
+
+Refined P-code instructions are obtained after decompilation. Each varnode in refined p-code instructions can be associated with a variable in the decompiled source code (e.g., in c/c++). The following code shows you how to retrieve the source-level information of a varnode in a refined p-code instruction. Here we print out the variable names in decompiled code for varnodes used as function parameters. 
+
+```python
+# For Refined P-Code Demo
+# @category: CEG7420.Demo
+# @author: Junjie Zhang
+
+from ghidra.app.decompiler import *
+
+# We will get refined p-code for the current function.
+func = getFunctionContaining(currentAddress)
+myDecomp = DecompInterface()
+myDecomp.openProgram(currentProgram)
+
+if func is None:
+    print("No function contains this address.")
+    exit()
+
+decomp_results = myDecomp.decompileFunction(func, 30, monitor)
+if decomp_results is None:
+    print("Fail to decompile this function.")
+    exit()
+
+results_highFunction = decomp_results.getHighFunction()
+if results_highFunction is None:
+    print("Fail to get the high function.")
+    exit()
+
+paramSet = set()
+
+pcode_seq = results_highFunction.getPcodeOps() # This pcode_seq is refined pcode!
+
+for op in pcode_seq:
+    output = op.getOutput()
+    inputs = op.getInputs()
+    for invar in inputs:
+        hv = invar.getHigh()
+        if hv:
+            hs = hv.getSymbol()
+            if hs and hs.isParameter():
+                paramSet.add(invar)
+
+print("all varnodes in refined pcode that are identified as parameters.")
+for invar in paramSet:
+    hv = invar.getHigh()
+    if hv:
+        hs = hv.getSymbol()
+        if hs:
+            print("varnode: {}, high variable name: {}, symbol name: {}".format(invar, hv.getName(), hs.getName()))
+```
+
+### `getDef()` and `getDescendants()`
+
+Both methods of `varnode` are essential to perform taint or data flow analysis on refined p-code. 
+
++ `getDef()`: get the refined p-code instruction that defines this varnode (a.k.a, uses this varnode the output). 
++ `getDescendants()`: get an iterator of all refined p-code instructions that use this varnode as input. 
+
+```python
+# this code snippet is in the SSA form. 
+x1 = 1
+x2 = 3
+y1 = x1 + 5
+z1 = y1 * 2
+w1 = x1 + x2
+```
+If you are exploring this instruction `w1 = x1 + x2`, and you get the `x1` variable/varnode in this instruction. 
++ if you call `x1.getDef()`, you should get the definition of `x1`, i.e., the instruction that writes into `x1`. In other words,  `x1.getDef()` should return `x1 = 1`.
++ if you call `x1.getDescendants()`, you should get a list of all instructions that use `x1` as the input. In other words,  `x1.getDescendants()` should return `y1 = x1 + 5` and `w1 = x1 + x2`, where both of them use `x1` as input.  
+
+It helps tracking how data flows in a program by iteratively exploring the definition or descendants of a varnode. 
+
+```python
+# For Refined P-Code Demo
+# @category: CEG7420.Demo
+# @author: Junjie Zhang
+
+from ghidra.app.decompiler import *
+
+# We will get refined p-code for the current function.
+func = getFunctionContaining(currentAddress)
+myDecomp = DecompInterface()
+myDecomp.openProgram(currentProgram)
+
+if func is None:
+    print("No function contains this address.")
+    exit()
+decomp_results = myDecomp.decompileFunction(func, 30, monitor)
+if decomp_results is None:
+    print("Fail to decompile this function.")
+    exit()
+results_highFunction = decomp_results.getHighFunction()
+if results_highFunction is None:
+    print("Fail to get the high function.")
+    exit()
+
+paramSet = set()
+pcode_seq = results_highFunction.getPcodeOps() # This pcode_seq is refined pcode!
+
+for op in pcode_seq:
+    print(op)
+    output = op.getOutput()
+    if output:
+        print("\toutput varnode: {}".format(output))
+        
+        inst_def = output.getDef()
+        print("\t\t It is defined by: {}".format(inst_def))
+        
+        inst_descendants = output.getDescendants()
+        for i in inst_descendants:
+            print("\t\t It is used by: {}".format(i))
+    inputs = op.getInputs()
+    for invar in inputs:
+        print("\tinput varnode: {}".format(invar))
+        inst_def = invar.getDef()
+        print("\t\t It is defined by: {}".format(inst_def))
+        
+        inst_descendants = invar.getDescendants()
+        for i in inst_descendants:
+            print("\t\t It is used by: {}".format(i))
 ```
