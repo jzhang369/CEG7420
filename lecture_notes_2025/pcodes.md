@@ -442,7 +442,7 @@ If you are exploring this instruction `w1 = x1 + x2`, and you get the `x1` varia
 + if you call `x1.getDef()`, you should get the definition of `x1`, i.e., the instruction that writes into `x1`. In other words,  `x1.getDef()` should return `x1 = 1`.
 + if you call `x1.getDescendants()`, you should get a list of all instructions that use `x1` as the input. In other words,  `x1.getDescendants()` should return `y1 = x1 + 5` and `w1 = x1 + x2`, where both of them use `x1` as input.  
 
-It helps tracking how data flows in a program by iteratively exploring the definition or descendants of a varnode. 
+It helps tracking how data flows in a program by iteratively exploring the definition or descendants of a varnode. For every varnode in each refined p-code instruction, we display its definition instruction and all instructions that use it as input. 
 
 ```python
 # For Refined P-Code Demo
