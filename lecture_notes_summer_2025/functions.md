@@ -110,6 +110,9 @@ else:
 
 ### **How to Enumerate all Functions in Ghidra?**
 
+Layout of functions in the `.text` section. 
+
+
 + `getFunctionAfter(Address address)`
 + `getFunctionAfter(Function function)`
 + `getFunctionBefore(Address address)`
