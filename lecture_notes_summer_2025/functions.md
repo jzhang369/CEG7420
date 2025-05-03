@@ -48,7 +48,25 @@ This resource provides detailed descriptions of the Function class and its metho
 
 ## **Working with Functions**
 
-### **Retrieving Function Objects in Ghidra**
+### **Function Layout in a Binary**
+
+In a typical binary executable, the `.text` section contains the machine code for all defined (non-inline) functions. These functions are generally laid out in a **sequential (or consecutive)** manner in memory. That is, one function usually begins immediately after the previous one ends, though this layout may include padding to satisfy alignment constraints. For example, if one function ends at address 0x1000, the next might begin at 0x1010 depending on the required alignment.
+
+
+```mermaid
+block-beta
+  block
+    columns 1
+    a["Function 1"] 
+    b["Function 2"]
+    c["......"]
+    d["Function N"]
+  end
+```
+
+
+
+### **Retrieving One Function Object in Ghidra**
 
 
 Ghidra's `FlatProgramAPI` provides several convenient methods to access Function objects within a binary. These methods allow you to retrieve specific functions based on their name, address, or relative position:
@@ -67,9 +85,9 @@ Ghidra's `FlatProgramAPI` provides several convenient methods to access Function
 
 - `getFunctionBefore(Address address)` : Gets the previous function before the specified address.
 
-These methods form the basis for navigating and analyzing functions through scripting in Ghidra.
+These methods provide the foundation for navigating and analyzing functions through scripting in Ghidra.
 
-Examples: 
+Here are some examples: 
 
 ```python
 # Get a function using getFirstFunction()
@@ -108,15 +126,19 @@ else:
 	print("Function containing {} does not exist.".format(addr))
 ```
 
-### **How to Enumerate all Functions in Ghidra?**
-
-Layout of functions in the `.text` section. 
+### **Enumerating all Functions in Ghidra**
 
 
-+ `getFunctionAfter(Address address)`
-+ `getFunctionAfter(Function function)`
-+ `getFunctionBefore(Address address)`
-+ `getFunctionBefore(Function function)`
+
+The methods in `FlatProgramAPI` can be used to enumerate all functions in a binary. 
+
+- `getFunctionAfter(Address address)`  : Returns the next function in memory after the specified address. Even if the address lies within a function, this method returns the one that starts *after* it.
+
+- `getFunctionAfter(Function function)` : Returns the next function in memory after the entry point of the given function. This is helpful for forward traversal of functions based on layout in memory.
+
+- `getFunctionBefore(Address address)` : Returns the last function that starts before the given address. If the address lies inside a function, the method still returns the one that starts before it.
+
+- `getFunctionBefore(Function function)` : Returns the function whose entry point is located just before the entry point of the provided function. This is useful for backward traversal of functions.
 
 ```python
 # Enumerate all functions using getFunctionAfter(Function function)
@@ -135,18 +157,29 @@ while func:
 	func = getFunctionBefore(func)
 ```
 
+In addition to use these methods in `FlatProgramAPI`, you can also use `FunctionManagerDB` class. A `FunctionManagerDB` object can be returned by the `getFunctionManager()` method in defined the `ProgramDB` class. Again, `currentProgram` is an object of the `ProgramDB` class. 
+
+
 ```python
-# Enumerate all functions using FunctionManager
-# docs/GhidraAPI_javadoc/api/ghidra/program/model/listing/FunctionManager.html
-# You really do not have to use FunctionManager. 
+# Enumerate all functions using FunctionManagerDB
 fm = currentProgram.getFunctionManager()
 allFuncs = fm.getFunctions(True)
 for f in allFuncs:
 	print(f)
 ```
 
+Alternatively, you can use the `FunctionManagerDB` class. This class provides a powerful set of methods for querying and iterating over functions stored in a program database. These methods are especially useful for batch processing, function-level analysis, and constructing custom analyses or reports in Ghidra scripts.
 
-### **How to Retrieve Useful Information from a Function Object**
+- `getFunctionCount()`  : Returns the total number of functions defined in the current program. 
+
+- `getFunctions(boolean forward)` : Returns an iterator over all functions in the program, ordered either in ascending (`true`) or descending (`false`) address order. 
+
+- `getFunctions(Address start, boolean forward)` : Returns an iterator starting from a specific address, moving forward or backward depending on the `forward` flag. 
+
+- `getFunctions(AddressSetView asv, boolean forward)` : Returns an iterator over all functions whose entry points fall within a given `AddressSetView`, ordered by address direction. 
+
+
+### **Retrieving Useful Information from a Function Object**
 
 What properities of a function that might be of your interest? 
 + function name
