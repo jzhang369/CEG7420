@@ -160,15 +160,9 @@ while func:
 In addition to use these methods in `FlatProgramAPI`, you can also use `FunctionManagerDB` class. A `FunctionManagerDB` object can be returned by the `getFunctionManager()` method in defined the `ProgramDB` class. Again, `currentProgram` is an object of the `ProgramDB` class. 
 
 
-```python
-# Enumerate all functions using FunctionManagerDB
-fm = currentProgram.getFunctionManager()
-allFuncs = fm.getFunctions(True)
-for f in allFuncs:
-	print(f)
-```
 
-Alternatively, you can use the `FunctionManagerDB` class. This class provides a powerful set of methods for querying and iterating over functions stored in a program database. These methods are especially useful for batch processing, function-level analysis, and constructing custom analyses or reports in Ghidra scripts.
+
+The `FunctionManagerDB` class provides a powerful set of methods for querying and iterating over functions stored in a program database. These methods are especially useful for batch processing, function-level analysis, and constructing custom analyses or reports in Ghidra scripts.
 
 - `getFunctionCount()`  : Returns the total number of functions defined in the current program. 
 
@@ -178,6 +172,15 @@ Alternatively, you can use the `FunctionManagerDB` class. This class provides a 
 
 - `getFunctions(AddressSetView asv, boolean forward)` : Returns an iterator over all functions whose entry points fall within a given `AddressSetView`, ordered by address direction. 
 
+An Example: 
+
+```python
+# Enumerate all functions using FunctionManagerDB
+fm = currentProgram.getFunctionManager()
+allFuncs = fm.getFunctions(True)
+for f in allFuncs:
+	print(f)
+```
 
 ### **Retrieving Useful Information from a Function Object**
 
