@@ -126,7 +126,7 @@ else:
 	print("Function containing {} does not exist.".format(addr))
 ```
 
-### **Enumerating all Functions in Ghidra**
+### **Enumerating all Functions in a Binary**
 
 
 

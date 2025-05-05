@@ -1,21 +1,22 @@
-# **Programming with Instructions in Ghidra**
+# **Ghidra Scripting: Working with Instructions**
 
-## **Why Care about Instructions?**
+## **Why Instructions Matter?**
 
-In Ghidra, instructions represent the low-level operations executed by a processor. They are a fundamental aspect of binary analysis. A binary contains machine code. However, Ghidra helps analysts to disassemble *machine code* into **human-readable** *assembly instructions*, allowing analysts to understand program behavior at the instruction level. 
+In Ghidra, **instructions** represent the low-level operations executed by a processor and are fundamental to binary analysis. While binaries contain raw machine code, Ghidra disassembles this code into *human-readable* **assembly instructions**, enabling analysts to understand program behavior at the instruction level.
 
-In this section, we refer *instructions* specifically for assembly instructions. Later, we will introduce intermediate representation such as Pcode, which can also be considered as instructions. 
+In this section, the term *instructions* specifically refers to assembly instructions. Later, we will introduce intermediate representations, such as **Pcode**, which can also be considered a form of instruction but at a higher abstraction level.
 
-Ghidra provides APIs to interact with instructions through programming, enabling many tasks such as:
+Ghidra provides APIs for interacting with instructions programmatically, supporting a variety of tasks such as:
 
-+ iterating over instructions,
-+ extracting operators (menomic strings) and operands,
-+ and performing statistical analysis.
+- Iterating over instructions
+- Extracting mnemonics and operands
+- Identifying relationships with other objects (e.g.,through `reference`). 
 
-The `Instruction` class in Ghidra offers methods to retrieve details of an instruction such as its mnemonic, operand(s), and references to memory or registers. 
+The `Instruction` class in Ghidra offers rich methods for retrieving details of an instruction, including its mnemonic, operands, and references to memory locations or registers.
 
 
-## **Where to Find More Information**
+
+## **Where to Find More Information?**
 
 For more detailed information on programming with instructions in Ghidra, refer to the official Ghidra API documentation. The relevant information can be found in your Ghidra installation at: 
 
@@ -24,16 +25,30 @@ docs/GhidraAPI_javadoc/api/ghidra/program/model/listing/Instruction.html
 
 ## **Working With Instructions**
 
-### **How to Get An Instruction Object in Ghidra?**
+### **Retrieving One Instruction Object in Ghidra**
 
-Let us start with `FlatProgramAPI`, and we will find the following methods that can return an instruction object:
+## **Retrieving Instructions Using `FlatProgramAPI`**
 
-+ `getFirstInstruction()` and `getLastInstruction()`
-+ `getFirstInstruction(Function function)` - Get the first instruction inside a given function. 
-+ `getInstructionAt(Address address)` - Get the instruction at a specific address. 
-+ `getInstructionContaining(Address address)` - Get the instruction if this instruction contains this address. 
-+ `getInstructionAfter(Address address)` and `getInstructionAfter(Instruction instruction)`
-+ `getInstructionBefore(Address address)` and `getInstructionBefore(Instruction instruction)`
+Let’s begin with the `FlatProgramAPI`, which provides several convenient methods to retrieve `Instruction` objects:
+
+- `getFirstInstruction()` / `getLastInstruction()`  
+Retrieve the first or last instruction in the entire program.
+
+- `getFirstInstruction(Function function)`  
+  Returns the first instruction within a specified function.
+
+- `getInstructionAt(Address address)`  
+  Retrieves the instruction located exactly at the given address, if one exists.
+
+- `getInstructionContaining(Address address)`  
+  Returns the instruction that contains the specified address (useful for instructions spanning multiple bytes).
+
+- `getInstructionAfter(Address address)` / `getInstructionAfter(Instruction instruction)`  
+  Returns the instruction that follows the given address or instruction.
+
+- `getInstructionBefore(Address address)` / `getInstructionBefore(Instruction instruction)`  
+  Returns the instruction that precedes the given address or instruction.
+
 
 ```python
 # get the first instruction and the last instruction in this binary.
@@ -72,7 +87,7 @@ else:
 	print("no instruction that contains the address of {}.".format(addr))
 ```
 
-### **How to Enumerate All Instructions Inside a Binary?**
+### **Enumerating all Instructions in a Binary**
 
 **Option 1:** You can use `getInstructionAfter()` and `getInstructionBefore()` to enumerate all instructions inside a binary. 
 
@@ -95,7 +110,7 @@ for inst in instructionIterator:
 ```
 
 
-### **How to Enumerate All Instructions in a Function?**
+### **Enumerating all Instructions in a Function**
 
 **Option 1:** Enumerate all instructions starting from the first instruction of this function, and check whether this instruction's address is inside the body of this function. 
 
@@ -127,10 +142,12 @@ if myFunc:
 		print(inst)
 ```
 
-### **How to Retrieve Information from an Instruction?**
+### **Retrieving Useful Information from an Instruction Object**
 
 Potentially useful information for an instruction:
  
+When working with an `Instruction` object in Ghidra, you can extract some properties that may be useful for analysis or scripting:
+
 + mnemonic: `getMnemonicString()`
   + type
 + operands: `getInputObjects()`
