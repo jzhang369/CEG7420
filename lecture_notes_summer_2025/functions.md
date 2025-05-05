@@ -184,31 +184,44 @@ for f in allFuncs:
 
 ### **Retrieving Useful Information from a Function Object**
 
-What properities of a function that might be of your interest? 
-+ function name
-+ calling convention
-+ function signature including returned type, parameters and their corresponding types
-+ entry point (the address of the first instruction of this function)
-+ exit point (the address of the last instruction of this function)
-+ size of the function (the number of bytes for the body of the function)
-+ type of the function
-  + internal function? 
-  + external function? 
-  + inline function? 
-  + thunk function?
-+ Parameters
-  + get the name & type of each parameter
-  + set the name & type of each parameter
-+ Local Variables
-  + get the name & type of each local variable
-  + set the name & type of each local variable
-+ Returned Variable
-  + The name and type of the returned variable
+When working with a `Function` object in Ghidra, you can extract a wide range of properties that may be useful for analysis or scripting:
+
+- **Function Name**
+- **Calling Convention**
+  - `__cdecl`: Caller cleans the stack; Arguments passed right-to-left
+  - `__stdcall`: Callee cleans the stack; Arguments passed right-to-left
+  - `__fastcall`: Callee cleans the stack; First 1–2 arguments passed in registers (e.g., ECX, EDX); Remaining arguments on stack (right-to-left)
+  - ......
+- **Function Signature**
+  - Return type
+  - Parameters and their corresponding types
+- **Entry Point**: The address of the first instruction in the function.
+- **Exit Point**: The address of the last instruction in the function.
+- **Function Size**: The number of bytes that comprise the function body.
+- **Function Type**
+  - *Internal function*: a function whose implementation resides within the binary being analyzed.  
+  - *External function*: a function that is declared but not implemented in the current binary; it is typically implemented in another library  
+  - *Inline function*: a function whose code has been copied directly into the caller during compilation, so it does not appear as a distinct function in the binary.  
+  - *Thunk function*: a function corresponds to a fragment of code which simply passes control to a destination function (e.g., for DLL import resolution). 
+
+- **Parameters**
+  - Retrieve the name and type of each parameter
+  - Modify the name and type of each parameter
+- **Local Variables**
+  - Retrieve the name and type of each local variable
+  - Modify the name and type of each local variable
+- **Return Variable**
+  - Retrieve the name and type of the return variable
+
+In addition to retrieving the information, you can also set certain information such as 
++ The variable name and the type,
++ The calling convention, and 
++ The comment. 
 
 
 ```python
-# Retrieve some properties of a function object.
-# @category: CEG7420.Demo
+# Retrieve useful properties from a function object.
+# @category: GhidraScripting.Demo
 # @author: Junjie Zhang
 
 from ghidra.program.model.symbol import SourceType
@@ -229,7 +242,7 @@ for f in allFuncs:
     print("signature:\t\t{}".format(f.getSignature()))
     print("entry address:\t\t{}".format(f.getEntryPoint()))
     print("exit address:\t\t{}".format(f_body.getMaxAddress()))
-    print("size of function body:\t\t{}".format(f_body.getMaxAddress().subtract(f.getEntryPoint())))
+    print("size of function body:\t\t{}".format(f_body.getNumAddresses()))
     print("internal function:\t\t{}".format(not f.isExternal()))
     print("external function:\t\t{}".format(f.isExternal()))
     print("inline function:\t\t{}".format(f.isInline()))
@@ -244,7 +257,7 @@ for f in allFuncs:
         # This is to set the name of the first parameter we see over all functions. 
         if flag:
             flag = False
-            i.setName("CEG7420_Temp", SourceType.USER_DEFINED) 
+            i.setName("Temp_XYZ", SourceType.USER_DEFINED) 
 
     local_variables = f.getLocalVariables()
     for i in local_variables:
@@ -256,3 +269,5 @@ for f in allFuncs:
     
     print("Returned Varaible & Type:\t\t{}:{}".format(ret_variable, ret_variable_type))
 ```
+
+
