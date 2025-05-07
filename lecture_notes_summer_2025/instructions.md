@@ -27,8 +27,6 @@ docs/GhidraAPI_javadoc/api/ghidra/program/model/listing/Instruction.html
 
 ### **Retrieving One Instruction Object in Ghidra**
 
-## **Retrieving Instructions Using `FlatProgramAPI`**
-
 Let’s begin with the `FlatProgramAPI`, which provides several convenient methods to retrieve `Instruction` objects:
 
 - `getFirstInstruction()` / `getLastInstruction()`  
@@ -60,7 +58,7 @@ print(lastInstruction)
 ```
 
 ```python
-# enumerate through all functions in this binary, and for each function print out its first instruction. 
+# enumerate all functions in this binary, and for each function print out its first instruction. 
 fm = currentProgram.getFunctionManager()
 allFuncs = fm.getFunctions(True)
 for f in allFuncs:
@@ -70,7 +68,7 @@ for f in allFuncs:
 
 ```python
 # ask the user to offer an address and then attempt to get the instruction at that address. This address is for the address of the very first byte of the instruction. 
-addr = askAddress("Lecture for Instructions", "Please give me an address!")
+addr = askAddress("Ghidra Scripting - Instructions", "Please give me an address!")
 myInstruction = getInstructionAt(addr)
 if myInstruction:
 	print(myInstruction)
@@ -78,8 +76,8 @@ else:
 	print("no instruction found at the address of {}.".format(addr))
 ```
 ```python
-# ask the user to offer an address and then attempt to get the instruction that contains address. Note: an instruction might be composed of multiple bytes.  
-addr = askAddress("Lecture for Instructions", "Please give me an address!")
+# ask the user to offer an address and then attempt to get the instruction that contains address. Note: an instruction may have multiple bytes.  
+addr = askAddress("Ghidra Scripting - Instructions", "Please give me an address!")
 myInstruction = getInstructionContaining(addr)
 if myInstruction:
 	print(myInstruction)
@@ -112,7 +110,9 @@ for inst in instructionIterator:
 
 ### **Enumerating all Instructions in a Function**
 
-**Option 1:** Enumerate all instructions starting from the first instruction of this function, and check whether this instruction's address is inside the body of this function. 
+**Option 1:** 
+
+Enumerate all instructions starting from the first instruction of the function and verify whether each instruction's address is within the function’s body.
 
 ```python
 # display all instructions inside the function indicated by your cursor. 
@@ -129,7 +129,9 @@ else:
 ```
 
 
-**Option 2:** Using `getInstructions(AddressSetView addrSet, boolean forward)` of the `listing` object. 
+**Option 2:** 
+
+Using `getInstructions(AddressSetView addrSet, boolean forward)` of the `listing` object. 
 
 ```python
 myFunc = getFunctionContaining(currentAddress)
@@ -143,8 +145,6 @@ if myFunc:
 ```
 
 ### **Retrieving Useful Information from an Instruction Object**
-
-Potentially useful information for an instruction:
  
 When working with an `Instruction` object in Ghidra, you can extract some properties that may be useful for analysis or scripting:
 
@@ -155,9 +155,10 @@ When working with an `Instruction` object in Ghidra, you can extract some proper
   + type
 + address: `getAddress()`, `getMinAddress()`, and `getMaxAddress()`
 + size:	`getLength()`
-+ Fall-Through: the fall-through of an instruction refers to the next sequential instruction in memory that would be executed if there is no explicit change in control flow. 
++ Fall-Through: `getFallThrough()` - the fall-through of an instruction refers to the next sequential instruction in memory that would be executed if there is no explicit change in control flow. 
   + For most linear instructions (`mov`, `add`, and etc.), execution naturally proceeds to the next instruction.
   + For branching instructions, such as `JMP`, `CALL`, and `RET`, execution may deviate from the sequential flows. 
++ Flows: `getFlows()` - an array of addresses to be executed other than a fall-through. 
 
 ```python
 # This example is to count the occurence for each mnemonic string showing up in this body of the current function. 
@@ -220,9 +221,18 @@ if myFunc:
 
 ```
 
+## **Applications**
+
 ### **Application 1: Enumerate All Callees of the Current Function**
 
-**Option 1:** Parse each instruction, get operands, and find the address in the operand.
+**Option 1:** 
+1. **Enumerate** all instructions within the function.  
+2. **Identify** `CALL` instructions.  
+3. **Parse** each `CALL` instruction to extract the operand, representing the callee's address.  
+4. **Determine** the function whose entry point matches the extracted address.  
+
+
+
 
 ```python
 myFunc = getFunctionContaining(currentAddress)
@@ -242,7 +252,9 @@ if myFunc:
 
 
 
-**Option 2:** Using *flows* to get the address of the callee.
+**Option 2:** 
+
+Using flows via `getFlows()` to obtain the address of the callee eliminates the need to parse instructions for callee addresses.
 
 ```python
 myFunc = getFunctionContaining(currentAddress)
@@ -253,7 +265,7 @@ if myFunc:
 	instructionIterator = myListing.getInstructions(fbody, True)
 	for inst in instructionIterator:
 		if inst.getMnemonicString().startswith("CALL"):
-			addrOtherThanFallThrough = inst.getFlows() # this gives the target of the instruction
+			addrOtherThanFallThrough = inst.getFlows() # addrOtherThanFallThrough is a list of callees' addresses
 			for one in addrOtherThanFallThrough:
 				callee = getFunctionAt(one)
 				print("		callee: {}".format(callee))
@@ -264,10 +276,13 @@ if myFunc:
 ### **Application 2: Enumerate All Callers of the Current Function**
 
 **Option 1**: 
-+ Enumerate all instructions, and identify `CALL` instructions, 
-+ For a `CALL` instruction, check whehter its operand matches with the address of the current function. 
-  + If so, this instruction is a `CALL` instruction to the current function, and the function that contains that instruction will be a caller of the current instruction. 
-  + Get the function that contains the address of that instruction. 
+
+
+- **Enumerate** <u>all</u> instructions in the analyzed binary and identify `CALL` instructions.  
+- For each `CALL` instruction, **check** whether its operand matches the address of the current function:  
+  - If it matches, the `CALL` instruction targets the current function, and the function containing this `CALL` instruction is identified as a caller.  
+  - **Locate** the function that contains the address of the `CALL` instruction.  
+
 
 ```python
 callers = set()
@@ -289,7 +304,10 @@ print(callers)
 ```
 
 
-**Option 2**: Use `getFlows()` instead of `getOpObjects(0)[0]`, which makes the code more readable. 
+**Option 2**: 
+
+Using `getFlows()` instead of `getOpObjects(0)[0]` enhances code readability by removing the need to manually parse instructions for callee addresses.
+
 
 ```python
 callers = set()
