@@ -20,6 +20,13 @@ References are very useful for automating binary analysis tasks and improving re
 
 + They help analysts understand how instructions and data interact, aiding in reconstructing program logics.
 
+A motivating example - identifying all callers of the current function:
+
+```python
+# code comes here.
+```
+
+
 ## **Where to Find More Information?**
 
 For more detailed information on programming with references in Ghidra, refer to the official Ghidra API documentation. The relevant information can be found in your Ghidra installation at: 
