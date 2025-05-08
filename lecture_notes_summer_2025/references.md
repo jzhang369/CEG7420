@@ -86,6 +86,11 @@ if inst:
 
 ### **Reference Types**
 
+Use this to check the reference type. 
+```python
+allRefs[0].getReferenceType() == RefType.CONDITIONAL_JUMP
+```
+
 For a reference, you can use `getReferenceType()` to get a `RefType` object. The `RefType` class contains detailed information for all types supported by Ghidra's `Reference` class. Examples include, but are not limited to:
 + CONDITIONAL_JUMP
 + UNCONDITIONAL_JUMP
