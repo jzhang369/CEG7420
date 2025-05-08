@@ -1,24 +1,34 @@
-# **Programming with References in Ghidra**
+# **Ghidra Scripting: Working with References**
 
-## **Why Care about References?**
+## **Why References Matter?**
 
 In Ghidra, a **reference** represents a relationship between two addresses in a binary. For example, a reference can represent:
 
++ control flow changes
 + function call
 + data access
-+ control flow changes
 
-Each reference will contain two addresses, a `FROM` address and a `TO` address. References are very useful because they free your program from parsing instructions and interpreting semantic meanings of highly diversified mnemonics. Specifically, references help analysts understand how instructions and data interact, aiding in reconstructing program logics. 
+
+Each reference will contain two addresses, 
++ a `FROM` address and 
++ a `TO` address. 
+ 
 
 References are very useful for automating binary analysis tasks and improving reverse engineering efficiency. 
 
++ They free your program from parsing instructions and interpreting semantic meanings of highly diversified mnemonics.
+
++ They help analysts understand how instructions and data interact, aiding in reconstructing program logics.
+
 ## **Where to Find More Information?**
+
+For more detailed information on programming with references in Ghidra, refer to the official Ghidra API documentation. The relevant information can be found in your Ghidra installation at: 
 
 docs/GhidraAPI_javadoc/api/ghidra/program/model/symbol/Reference.html
 
 ## **Working with References**
 
-### **How to Get an Reference Object Using Ghidra?**
+### **Retrieving one Reference Object**
 
 + `FlatProgramAPI`
 + `ReferenceManager`: `currentProgram.getReferenceManager()`. This class gives you an enriched set of methods to retrieve information about references. 
