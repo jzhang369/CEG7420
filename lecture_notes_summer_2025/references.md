@@ -16,6 +16,7 @@ References are very useful for automating binary analysis and enhancing reverse 
 - They eliminate the need to parse instructions and interpret the semantic meaning of diverse mnemonics.  
 - They assist analysts in understanding how instructions and data interact, aiding in the reconstruction of program logic.  
 
+An example: <FROM: 00102788, To: 00105b60, Type: Unconditional_Call> because at 0x00102788, there is an instruction `CALL 0x00105b60`
 
 
 ## **Where to Find More Information?**
@@ -23,6 +24,7 @@ References are very useful for automating binary analysis and enhancing reverse 
 For more detailed information on programming with references in Ghidra, refer to the official Ghidra API documentation. The relevant information can be found in your Ghidra installation at: 
 
 docs/GhidraAPI_javadoc/api/ghidra/program/model/symbol/Reference.html
+
 
 ## **Working with References**
 
@@ -34,12 +36,12 @@ Given an address, such as `addr`, you can identify:
 
 This address can be any location within the binary, such as the address of an instruction, the entry point of a function, or the address of a byte.  
 
-Both the `FlatProgramAPI` and `ReferenceManager` classes provide methods to retrieve references associated with a specific address. It is important to note that a single address may be associated with multiple references.  
-
-A `ReferenceManager` object can be obtained using `currentProgram.getReferenceManager()`
-
+Both the `FlatProgramAPI` and `ReferenceManager` classes provide methods to retrieve references associated with a specific address. It is important to note that a single address may be associated with multiple references.  A `ReferenceManager` object can be obtained using `currentProgram.getReferenceManager()`.
 
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
 # enumerate all references from and to an address
 addr = askAddress("Ghidra Scripting - References", "Please input an address:")
 for i in getReferencesFrom(addr):
@@ -48,9 +50,16 @@ for i in getReferencesTo(addr):
 	print("a ref to this address: {}".format(i))
 ```
 
+
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
 addr = askAddress("Ghidra Scripting - References", "Please input an address:")
+
 refManager = currentProgram.getReferenceManager()
+
 for i in refManager.getReferencesFrom(addr):
 	print("a ref from this address: {}".format(i))
 for i in refManager.getReferencesTo(currentAddress):
@@ -64,8 +73,10 @@ Since a reference is always associated with an address, you can enumerate refere
 1. **Enumerating all addresses** within the function.  
 2. **Retrieving references** for each address.  
 
-
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
 myFunc = getFunctionContaining(currentAddress)
 if myFunc:
 	print(myFunc.getName())
@@ -77,35 +88,28 @@ if myFunc:
 			print("a ref to this address {}: {}".format(addr, i))
 ```
 
-
-
-
 ### **Enumerating Reference Objects Relevant to an Instruction**
 
 Again, a reference is always associated with an address. You can obtain the address of an instruction and then retrieve all references from or to that address.  
 
 For example, let's get the first instruction of a function and identify references associated with this instruction.  
 
-
 ```python
-myFunc = getFunction("XYZ")
-inst = getFirstInstruction(myFunc)
-if inst:
-	addr = inst.getAddress()
-	for i in getReferencesFrom(addr):
-		print("Ref from {} {} is {}".format(addr, inst, i))
-	for i in getReferencesTo(addr):
-		print("Ref to {} {} is {}".format(addr, inst, i))	
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+myFunc = getFunctionContaining(currentAddress)
+if myFunc:
+	inst = getFirstInstruction(myFunc)
+	if inst:
+		addr = inst.getAddress()
+		for i in getReferencesFrom(addr):
+			print("a ref from this address {}: {}".format(addr, i))
+		for i in getReferencesTo(addr):
+			print("a ref to this address {}: {}".format(addr, i))
 ```
 
-In fact, the address of the first instruction of a function is the **entry point** of that function. Pay close attention to the references **to** this entry point.  
-
-Do you notice anything interesting?  
-
-
-
 ### **Understanding Reference Types**
-
 
 A reference characterizes the relationship between the `FROM` address and the `TO` address. This relationship can represent various interactions, such as:  
 
@@ -117,8 +121,8 @@ A reference characterizes the relationship between the `FROM` address and the `T
 
 For a reference, you can use the `getReferenceType()` method to obtain a `RefType` object, which indicates the type of the reference. Examples of reference types include, but are not limited to:  
 
-- `CONDITIONAL_JMP`  
-- `UNCONDITIONAL_JMP`  
+- `CONDITIONAL_JUMP`  
+- `UNCONDITIONAL_JUMP`  
 - `CONDITIONAL_CALL`  
 - `UNCONDITIONAL_CALL`  
 - `COMPUTED_CALL`  
@@ -126,46 +130,62 @@ For a reference, you can use the `getReferenceType()` method to obtain a `RefTyp
 The `RefType` class provides several methods to evaluate the type of a reference. For instance:  
 
 - Use `isCall()` to determine if the reference is a `CALL` type, regardless of whether it is `CONDITIONAL_CALL`, `UNCONDITIONAL_CALL`, `COMPUTED_CALL`, etc. Similarly, you can use analogous methods to identify `JMP` instructions.  
-- But if you can always check the specific type of a reference such as `UNCONDITIONAL_JMP`. You can use `ref.getReferenceType() == RefType.UNCONDITIONAL_JMP`. 
+- But if you can always check the specific type of a reference such as `UNCONDITIONAL_JUMP`. You can use `ref.getReferenceType() == RefType.UNCONDITIONAL_JUMP`. 
 
-
-Here’s an example: Enumerate all `JMP` references **from** each instruction in a binary, regardless of their specific types, such as `CONDITIONAL_JMP` or `UNCONDITIONAL_JMP`.  
-
+Here’s an example: Enumerate all `JMP` references **from** each instruction in a binary, regardless of their specific types, such as `CONDITIONAL_JUMP` or `UNCONDITIONAL_JUMP`.  
 
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
 myListing = currentProgram.getListing()
 instructionIterator = myListing.getInstructions(True)
 for inst in instructionIterator:
 	addr = inst.getAddress()
-	for ref in getReferencesFrom(addr):
+	allRefsFromAddr = getReferencesFrom(addr)
+	for ref in allRefsFromAddr:
 		if ref.getReferenceType().isJump():
 			print("{} with the specific type of {}".format(ref, ref.getReferenceType().getName()))
 ```
 
-Here’s another example: Enumerate all `UNCONDITIONAL_JMP` references **from** each instruction in a binary.  
-
+Here’s another example: Enumerate all `UNCONDITIONAL_JUMP` references **from** each instruction in a binary. 
 
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+from ghidra.program.model.symbol import RefType
+
 myListing = currentProgram.getListing()
 instructionIterator = myListing.getInstructions(True)
 for inst in instructionIterator:
 	addr = inst.getAddress()
-	for ref in getReferencesFrom(addr):
-		if ref.getReferenceType() == RefType.CONDITIONAL_JMP:
+	allRefsFromAddr = getReferencesFrom(addr)
+	for ref in allRefsFromAddr:
+		if ref.getReferenceType() == RefType.UNCONDITIONAL_JUMP:
 			print("{} with the specific type of {}".format(ref, ref.getReferenceType().getName()))
 ```
-
 
 
 ### **Application 1: Enumerate All Callees of the Current Function**
 
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+#find all callees of the current function.
+
 myFunc = getFunctionContaining(currentAddress)
 if myFunc:
-	fbody = myFunc.getBody() #fbody is an object of AddressSetView
 	print(myFunc)
+	
+	fbody = myFunc.getBody() #fbody is an object of AddressSetView
 	myListing = currentProgram.getListing()
 	instructionIterator = myListing.getInstructions(fbody, True)
+
 	for inst in instructionIterator:
 		addr = inst.getAddress()
 		for ref in getReferencesFrom(addr):
@@ -174,7 +194,6 @@ if myFunc:
 				calleeFunc = getFunctionAt(calleeAddr)
 				print("{} at {} calls {}".format(myFunc, addr, calleeFunc))
 ```
-
 
 ### **Application 2: Enumerate All Callers of the Current Function**
 
@@ -185,6 +204,7 @@ We already implemented two solutions by:
 For either implementation, we need to enumerate all instructions within the binary. The implementation using `getFlow()` is shown below.  
 
 ```python
+# old implementation
 callers = set()
 
 myFunc = getFunctionContaining(currentAddress)
@@ -204,26 +224,28 @@ print(callers)
 ```
 
 Let’s see how `reference` can assist in simplifying the implementation:  
-- Get the entry point of the current function.  
-- Retrieve references **to** this entry point and filter for `CALL` references only.  
+- Get the entrypoint of the current function.  
+- Retrieve references **to** this entrypoint and filter for `CALL` references only.  
 - Extract the `FROM` addresses from these references.  
 - For each of these addresses, identify the function that contains the address — this function is a caller.  
 
 **No need to enumerate all instructions of this binary!**
 
-
-
-
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+#find all callers of the current function.
+
 myFunc = getFunctionContaining(currentAddress)
 if myFunc:
-	addr = myFunc.getEntryPoint()
-	for ref in getReferencesTo(addr):
+	entrypoint = myFunc.getEntryPoint()
+	for ref in getReferencesTo(entrypoint):
 		if ref.getReferenceType().isCall():
-			callerAddr = ref.getFromAddress()
-			callerFunc = getFunctionContaining(callerAddr)
-			print("{} is called by {} at {}".format(myFunc, callerFunc, callerAddr))
-# since getReferencesTo(addr) returns an iterator, this code can be further simplied using a filter. 
+			callerInstAddr = ref.getFromAddress()
+			callerFunc = getFunctionContaining(callerInstAddr)
+			print("{} is called by {} at {}".format(myFunc, callerFunc, callerInstAddr))
 ```
 
 
@@ -235,72 +257,101 @@ All you need to do is:
 2. Identify the `CALL` reference **from** each instruction.  
 3. Check whether the `TO` address:  
    - Is within the body of the current function (this can be ignored as it is always the case).  
-   - Is smaller than the address of the current instruction (indicating a backward jump).  
-
+   - Is smaller than the address of the current instruction (indicating a backward jump).
 
 ```python
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+#find all callers of the current function.
+
 funcsWithLoop = set()
+
 myListing = currentProgram.getListing()
 fm = currentProgram.getFunctionManager()
 allFuncs = fm.getFunctions(True)
+
 for f in allFuncs:
     f_body = f.getBody()
+    
     instructionIterator = myListing.getInstructions(f_body, True)
+ 
     for inst in instructionIterator:
-    	jumpRefs = filter(lambda x: x.getReferenceType().isJump() and f_body.contains(x.getToAddress()) and x.getToAddress().subtract(inst.getAddress()) < 0, getReferencesFrom(inst.getAddress()))
-    	if len(list(jumpRefs)) > 0:
+    	allRefsFromInst = getReferencesFrom(inst.getAddress())
+    	allJumpRefsFromInst = filter(lambda x: x.getReferenceType().isJump(), allRefsFromInst)
+    	allBackwardJumpRefsFromInst = filter(lambda x: x.getFromAddress() > x .getToAddress(), allJumpRefsFromInst) 
+    	if len(allBackwardJumpRefsFromInst) > 0:
     		funcsWithLoop.add(f)
 
 print("Functions with loop:")
 for f in funcsWithLoop:
 	print(f)
-
 ```
-
 
 ### **Application 4: Identify All Recursion Functions**
 
 To identify recursive functions, check whether any instruction within a function makes a call to the function itself.  
 
 ```python
-funcsRecursion = set()
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+#find all recursion functions.
+
+funcsWithRecursion = set()
+
 myListing = currentProgram.getListing()
 fm = currentProgram.getFunctionManager()
 allFuncs = fm.getFunctions(True)
-for f in allFuncs:
-	entryAddr = f.getEntryPoint()
-	f_body = f.getBody()
-	instructionIterator = myListing.getInstructions(f_body, True)
-	for inst in instructionIterator:
-		callRefs = filter(lambda x: x.getReferenceType().isCall() and x.getToAddress().equals(entryAddr), getReferencesFrom(inst.getAddress()))
-    	if len(list(callRefs)) > 0:
-    		funcsRecursion.add(f)
 
-print("Recursion Functions:")
-for f in funcsRecursion:
+for f in allFuncs:
+    f_body = f.getBody()
+    
+    instructionIterator = myListing.getInstructions(f_body, True)
+ 
+    for inst in instructionIterator:
+    	allRefsFromInst = getReferencesFrom(inst.getAddress())
+    	allCallRefsFromInst = filter(lambda x: x.getReferenceType().isCall(), allRefsFromInst)
+    	allSelfCallRefsFromInst = filter(lambda x: x.getToAddress() == f.getEntryPoint(), allCallRefsFromInst) 
+    	if len(allSelfCallRefsFromInst) > 0:
+    		funcsWithRecursion.add(f)
+
+print("Functions with recusion:")
+for f in funcsWithRecursion:
 	print(f)
 ```
 
 Can you figure out a simpler solution using references? 
 
+
 ```python
-funcsRecursion = set()
+# Ghidra Scripting: References 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+#find all recursion functions.
+
+funcsWithRecursion = set()
+
 myListing = currentProgram.getListing()
 fm = currentProgram.getFunctionManager()
 allFuncs = fm.getFunctions(True)
+
 for f in allFuncs:
-	entryAddr = f.getEntryPoint()
-	f_body = f.getBody()
+    
+    entryPoint = f.getEntryPoint()
+    f_body = f.getBody()
 
-	allReferencesToEntry = getReferencesTo(entryAddr)
+    allRefsToEntryPoint = getReferencesTo(entryPoint)
+    allCallRefsToEntryPoint = filter(lambda x: x.getReferenceType().isCall(), allRefsToEntryPoint)
+    allSelfCallRefsToEntryPoint = filter(lambda x: f_body.contains(x.getFromAddress()), allCallRefsToEntryPoint)
+    
+    if len(allSelfCallRefsToEntryPoint) > 0:
+    	funcsWithRecursion.add(f)
 
-	selfCallRefs = filter(lambda x: x.getReferenceType().isCall() and f_body.contains(x.getFromAddress()), allReferencesToEntry)
-
-	if len(list(callRefs)) > 0:
-    	funcsRecursion.add(f)
-
-print("Recursion Functions:")
-for f in funcsRecursion:
+print("Functions with recusion:")
+for f in funcsWithRecursion:
 	print(f)
 ```
-
