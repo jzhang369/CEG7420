@@ -1,5 +1,7 @@
 # **Ghidra Scripting: Working with Functions**
 
+## By [**Dr. Junjie Zhang**](https://jzhang369.github.io/)
+
 ## **Why Functions Matter?**
 
 Functions are fundamental units of modularity and abstraction in software development. They enable developers to decompose complex systems into smaller, manageable components, facilitating 

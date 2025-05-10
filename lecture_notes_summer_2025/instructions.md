@@ -1,5 +1,7 @@
 # **Ghidra Scripting: Working with Instructions**
 
+## By [**Dr. Junjie Zhang**](https://jzhang369.github.io/)
+
 ## **Why Instructions Matter?**
 
 In Ghidra, **instructions** represent the low-level operations executed by a processor and are fundamental to binary analysis. While binaries contain raw machine code, Ghidra disassembles this code into *human-readable* **assembly instructions**, enabling analysts to understand program behavior at the instruction level.

@@ -1,4 +1,7 @@
 # **Programming with P-Codes in Ghidra**
+
+## By [**Dr. Junjie Zhang**](https://jzhang369.github.io/)
+
 ## **Why Care about P-Codes?**
 
 P-code is Ghidra’s intermediate representation (IR) used to abstract (a.k.a "lift") assembly instructions across different CPU architectures. It simplifies analysis and enables automated reverse engineering by explicitly representing instruction semantics.

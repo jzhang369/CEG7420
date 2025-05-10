@@ -1,5 +1,7 @@
 # **Ghidra Scripting: Working with References**
 
+## By [**Dr. Junjie Zhang**](https://jzhang369.github.io/)
+
 ## **Why References Matter?**
 
 In Ghidra, a reference consists of two addresses:  
