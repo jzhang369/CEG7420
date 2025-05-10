@@ -47,6 +47,9 @@ For this example, we have three basic blcoks.
 2038:   ret 
 ```
 
+![Control Flow Graph](./CFG_Example.png)
+
+
 **Basic blocks** are fundamental building blocks for constructing a **Control Flow Graph (CFG)**. A CFG is typically generated for one function. Therefore, the process of constructing a CFG from basic blocks belongs to intra-procedural analysis. Basic blocks of *a function* and their connections collectively form the CFG of this function.  
 
 + **Nodes**: each node is a basic block.
