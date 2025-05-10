@@ -1,5 +1,7 @@
 # **Ghidra Scripting: Working with Basic Blocks**
 
+## By [**Dr. Junjie Zhang**](https://jzhang369.github.io/)
+
 ## **Why Basic Blocks Matter?**
 
 A **basic block** is a sequence of consecutive instructions in a program with the following characteristics:  
