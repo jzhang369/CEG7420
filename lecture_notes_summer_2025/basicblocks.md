@@ -84,7 +84,7 @@ for i in myBasicBlocks:
 4. **`CodeBlockReferenceIterator getSources(TaskMonitor monitor)`**: Get an Iterator over the CodeBlocks that flow into this CodeBlock.
 5. **`CodeBlockReferenceIterator getDestinations(TaskMonitor monitor)`**: Get an Iterator over the CodeBlocks that are flowed to from this CodeBlock.
 
-### **Identifying Source/Destination Blocks of a Given Basic Block in a Binary**
+### **Identifying Source/Destination Blocks Using `CodeBlockReference`**
 
 For a basic block object, its `getSources(TaskMonitor monitor)` method will return Iterator of <u>**`CodeBlockReference`**</u> over the CodeBlocks that flow into this CodeBlock; its `getDestinations(TaskMonitor monitor)` will return an Iterator of <u>**`CodeBlockReference`**</u> over the CodeBlocks that are flowed to from this CodeBlock. 
 
@@ -135,6 +135,44 @@ if currentFunc:
 		print('Name: {}, Starting Address: {}'.format(name, i.getFirstStartAddress()))
 ```
 
-### **Application 1: Reachability Analysis**  
+### **Application: Reachability Analysis**  
 
 Given a basic block, identify all basic blocks from which the current basic block is reachable.  
+
+
+```python
+# Ghidra Scripting: Basic Blocks 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+# identify all basic blocks that can reach a given block.
+from  ghidra.program.model.block import BasicBlockModel
+
+addr = askAddress("Ghidra Scriting - Basic Blocks", "Give me any address in a basic block")
+myBlockModel = BasicBlockModel(currentProgram)
+targetBasicBlockList = myBlockModel.getCodeBlocksContaining(addr, monitor)
+
+if not targetBasicBlockList:
+	exit()
+
+targetBasicBlock = targetBasicBlockList[0]
+
+processedBasicBlocks = []
+toBeProcessedBasicBlocks = [targetBasicBlock]
+
+while len(toBeProcessedBasicBlocks) > 0:
+	one = toBeProcessedBasicBlocks.pop(0) # to dequeue the array
+	processedBasicBlocks.append(one)
+	srcs = one.getSources(monitor)
+	while srcs.hasNext():
+	 	s = srcs.next()
+		srcAddr = s.getSourceAddress()
+		srcBasicBlockList = myBlockModel.getCodeBlocksContaining(srcAddr, monitor)
+		if srcBasicBlockList:
+			srcBasicBlock = srcBasicBlockList[0]
+			if not (srcBasicBlock in processedBasicBlocks): # this srcBasicBlock has not been processed before
+				toBeProcessedBasicBlocks.append(srcBasicBlock)
+
+print("The Basic Block {} is reachable from the following Basic Blocks:".format(targetBasicBlock.getName()))
+print([i.getName() for i in processedBasicBlocks])
+```
