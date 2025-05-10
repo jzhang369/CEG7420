@@ -58,12 +58,14 @@ docs/GhidraAPI_javadoc/api/ghidra/program/model/block/BasicBlockModel.html
 To generate basic blocks for a binary, you will need to use the `BasicBlockModel` class. Each basic block is a sequence of consecutively executed instructions.  
 
 
-**Important Methods in BasicBlockModel**
+Important Methods in `BasicBlockModel`:
 
 1. **`getCodeBlocks(TaskMonitor monitor)`**: Get an iterator over the code blocks in the entire program.
 2. **`getCodeBlocksContaining(Address addr, TaskMonitor monitor)`**: Get all the Code Blocks containing the address.
 3. **`getCodeBlocksContaining(AddressSetView addrSet, TaskMonitor monitor)`**: Get an iterator over CodeBlocks which overlap the specified address set.
 4. **`getFlowType(CodeBlock block)`**: Return in general how things flow out of this node. (similar to the reference type). 
+
+An example - **enumerating all basic blocks in a binary**
 
 ```python
 # To enumerate all basic blocks in a binary.
@@ -74,11 +76,29 @@ for i in myBasicBlocks:
 	print(i)
 ```
 
+Another example - **Enumerating Basic Block Objects in a Function**
+
+```python
+from  ghidra.program.model.block import BasicBlockModel
+
+myBlockModel = BasicBlockModel(currentProgram)
+currentFunc = getFunctionContaining(currentAddress)
+if currentFunc:
+	fbody = currentFunc.getBody()
+	myBasicBlocks = myBlockModel.getCodeBlocksContaining(fbody, monitor)
+	for i in myBasicBlocks:
+		name = i.getName()
+		print('Name: {}, Starting Address: {}'.format(name, i.getFirstStartAddress()))
+```
+
+### **Understanding the `CodeBlock` class**
+
+
 The `CodeBlock` class represents these basic blocks in Ghidra. It provides methods for identifying and interacting with individual basic blocks within a program.  
 
 
 
-**Important Methods in CodeBlock**
+Important Methods in `CodeBlock`:
 
 1. **`Address[] getStartAddresses()`**: Get all the entry points to this block. 
 2. **`Address getFirstStartAddress()`**: Return the first start address of the CodeBlock.
@@ -86,7 +106,7 @@ The `CodeBlock` class represents these basic blocks in Ghidra. It provides metho
 4. **`CodeBlockReferenceIterator getSources(TaskMonitor monitor)`**: Get an Iterator over the CodeBlocks that flow into this CodeBlock.
 5. **`CodeBlockReferenceIterator getDestinations(TaskMonitor monitor)`**: Get an Iterator over the CodeBlocks that are flowed to from this CodeBlock.
 
-### **Identifying Source/Destination Blocks Using `CodeBlockReference`**
+### **Understanding the `CodeBlockReference` Class**
 
 For a basic block object, its `getSources(TaskMonitor monitor)` method will return Iterator of <u>**`CodeBlockReference`**</u> over the CodeBlocks that flow into this CodeBlock; its `getDestinations(TaskMonitor monitor)` will return an Iterator of <u>**`CodeBlockReference`**</u> over the CodeBlocks that are flowed to from this CodeBlock. 
 
@@ -122,20 +142,6 @@ for i in myBasicBlocks:
 		print("dst ref: {}".format(d))
 ```
 
-### **Enumerating Basic Block Objects in a Function**
-
-```python
-from  ghidra.program.model.block import BasicBlockModel
-
-myBlockModel = BasicBlockModel(currentProgram)
-currentFunc = getFunctionContaining(currentAddress)
-if currentFunc:
-	fbody = currentFunc.getBody()
-	myBasicBlocks = myBlockModel.getCodeBlocksContaining(fbody, monitor)
-	for i in myBasicBlocks:
-		name = i.getName()
-		print('Name: {}, Starting Address: {}'.format(name, i.getFirstStartAddress()))
-```
 
 ### **Application: Reachability Analysis**  
 
