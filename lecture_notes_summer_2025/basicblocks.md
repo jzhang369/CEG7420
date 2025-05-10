@@ -14,16 +14,23 @@ It is worth noting that when constructing basic blocks, function calls are gener
 
 ### **Example:**  
 ```assembley
-0x1000: MOV EAX, 5  
-0x1004: CALL 0x2000      ; Function call (not an exit point)  
-0x1009: ADD EAX, 3  
-0x100C: CMP EAX, 8  
-0x1010: JNZ 0x1020       ; Conditional jump (exit point)
+2000:   mov eax, 1        
+2004:   mov ebx, 0        
+2008:   cmp ebx, 0
+200C:   je 2020           
+2010:   mov ebx, 2
+2020:   mov edx, 14       
+2024:   mov ecx, 1000     
+2028:   mov ebx, 1        
+202C:   cmp eax, ebx        
+2030:   je 2000
+2034:   inc eax
+2038:   ret          
 ```
-+ The basic block starts at 0x1000 and continues through the function call at 0x1004.
-+ The function call is treated as a regular instruction, not a control flow transfer within the function.
-+ The basic block ends at the conditional jump instruction (0x1010), which is the actual exit point.
-+ The instructions from 0x1000 to 0x100C are part of the same basic block, despite the function call.
+There are three basic blocks
++ 2000 - 200c
++ 2010 - 2030
++ 2034 - 2038
  
 **Basic blocks** are fundamental building blocks for constructing a **Control Flow Graph (CFG)**. a CFG is typically generated for one function. Therefore, the process of constructing a CFG from basic blocks belongs to intra-procedural analysis. Basic blocks of *a function* and their connections collectively form the CFG of this function.  
 
