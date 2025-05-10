@@ -57,9 +57,13 @@ docs/GhidraAPI_javadoc/api/ghidra/program/model/block/BasicBlockModel.html
 
 To generate basic blocks for a binary, you will need to use the `BasicBlockModel` class. Each basic block is a sequence of consecutively executed instructions.  
 
-The `CodeBlock` class represents these basic blocks in Ghidra. It provides methods for identifying and interacting with individual basic blocks within a program.  
 
+**Important Methods in BasicBlockModel**
 
+1. **`getCodeBlocks(TaskMonitor monitor)`**: Get an iterator over the code blocks in the entire program.
+2. **`getCodeBlocksContaining(Address addr, TaskMonitor monitor)`**: Get all the Code Blocks containing the address.
+3. **`getCodeBlocksContaining(AddressSetView addrSet, TaskMonitor monitor)`**: Get an iterator over CodeBlocks which overlap the specified address set.
+4. **`getFlowType(CodeBlock block)`**: Return in general how things flow out of this node. (similar to the reference type). 
 
 ```python
 # To enumerate all basic blocks in a binary.
@@ -70,12 +74,8 @@ for i in myBasicBlocks:
 	print(i)
 ```
 
-**Important Methods in BasicBlockModel**
+The `CodeBlock` class represents these basic blocks in Ghidra. It provides methods for identifying and interacting with individual basic blocks within a program.  
 
-1. **`getCodeBlocks(TaskMonitor monitor)`**: Get an iterator over the code blocks in the entire program.
-2. **`getCodeBlocksContaining(Address addr, TaskMonitor monitor)`**: Get all the Code Blocks containing the address.
-3. **`getCodeBlocksContaining(AddressSetView addrSet, TaskMonitor monitor)`**: Get an iterator over CodeBlocks which overlap the specified address set.
-4. **`getFlowType(CodeBlock block)`**: Return in general how things flow out of this node. (similar to the reference type). 
 
 
 **Important Methods in CodeBlock**
