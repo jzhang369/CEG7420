@@ -147,8 +147,8 @@ The `CodeBlockReference` class represents an edge between a source code block (b
 - Similarly, when you use the `getDestinations(TaskMonitor monitor)` method on a `CodeBlock` object, you receive an iterator of `CodeBlockReference` objects. Each `CodeBlockReference` object provides:  
   - **`getSourceAddress()`**: The address of the first instruction in the current code block, which serves as the source of the edge.  
   - **`getDestinationAddress()`**: The address of the first instruction in the destination code block.  
-
-
+- `getSourceBlock()`: Returns the Source CodeBlock.
+- `getDestinationBlock()`: Returns the Destination CodeBlock.
 - The `getFlowType()` method is essential. In a `CodeBlock`, when using `getSources()`, it may return references of type `DATA` or `INDIRECTION`. These references do not represent actual incoming edges. Therefore, it is advisable to verify the type of each reference object and discard the irrelevant ones.  
 
 
