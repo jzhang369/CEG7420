@@ -1,8 +1,8 @@
-# **Programming with P-Codes in Ghidra**
+# **Ghidra Scripting: Working with P-Codes**
 
 ## By [**Dr. Junjie Zhang**](https://jzhang369.github.io/)
 
-## **Why Care about P-Codes?**
+## **Why P-Codes Matter?**
 
 P-code is Ghidra’s intermediate representation (IR) used to abstract (a.k.a "lift") assembly instructions across different CPU architectures. It simplifies analysis and enables automated reverse engineering by explicitly representing instruction semantics.
 
@@ -10,7 +10,7 @@ P-code is Ghidra’s intermediate representation (IR) used to abstract (a.k.a "l
 P-code offers a few unique advantages for reverse engineering and program analysis:
 + **Architecture Abstraction**: Provides a uniform representation across different CPU architectures.
 + **Explicit Side-Effects**: Clearly represents side-effects of assembly instructions that may not be immediately apparent.
-+ **Built-In Data Flow**: Used for data-flow tracking, taint analysis, and symbolic execution. (Only supported by Refined pcodes though.)
++ **Built-In Data Flow**: Used for data-flow tracking, taint analysis, and symbolic execution. (Only supported by Refined p-codes though.)
 
 The following table illustrates how these features facilitate two critical program analysis strategies. 
 
@@ -56,9 +56,9 @@ graph BT
     end
 
     B[SLEIGH Language Translator]
-    C[Raw P-code]
+    C[Raw P-Code / Low P-Code]
     D[Decompiler Engine]
-    E[Refined P-code]
+    E[Refined P-Code / High P-Code]
     F[Decompiled C/C++ Code]
 
     A1 --> B
@@ -85,23 +85,36 @@ graph BT
 
 ## **Where to Find More Information?**
 
+P-Code Overview:
+
+/docs/languages/index.html
+
+Raw P-Code:
+
 /docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOp.html
+
+Refined P-Code:
 
 /docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOpAST.html
 
-/docs/languages/index.html
+
 
 ## **P-Code Syntax**
 
 A p-code operation is the analog of a machine instruction. 
 + A Machine Instruction
-  + **opcode**: the action taken by this instruction (e.g., `ADD`, `JMP`, and etc.). 
+  + **mnemonic**: the action taken by this instruction (e.g., `ADD`, `JMP`, and etc.). 
   + **oprand**: the input(s) and output of this instruction (e.g., a register, a memory address, and etc.)
-  + **Side Effects**: a machine instruction may have side effects (e.g., by implicitly changing flag registers.)
+  + **side effects**: a machine instruction may have side effects (e.g., by implicitly changing flag registers.)
 + A p-code operation
   + **opcode**: the action taken by this p-code operation
   + **varnode**: the input(s) and output of this p-code operation. 
-  + **Side Effects**: for almost all p-code operations, only the output varnode can have its value modified; there are no indirect effects of the operation. 
+  + **side effects**: for p-code operations, only the output varnode can have its value modified; there are no indirect effects of the operation. 
+
+You can easily view raw P-Code instructions directly from Ghidra’s GUI. Alternatively, you can extract them programmatically using a simple script, such as the one below.
+
+
+
 
 ```python
 cnt = 0
@@ -123,9 +136,9 @@ for inst in instructionIterator:
 
 As we can find from the outputs, each of these p-code operations include a p-code opcode/operator, an output if existing, and zero or more inputs. 
 
-### **P-Code Operator/Opcode**
+### **P-Code Opcode**
 
-From [/docs/languages/index.html](https://spinsel.dev/assets/2020-06-17-ghidra-brainfuck-processor-1/ghidra_docs/language_spec/html/pcodedescription.html), you can find the detailed description of various p-code opcodes, which will be essential to the understanding of semantics of p-code operations. 
+From [/docs/languages/index.html](https://spinsel.dev/assets/2020-06-17-ghidra-brainfuck-processor-1/ghidra_docs/language_spec/html/pcodedescription.html), you can find the detailed description of various p-code opcodes, which will be essential to the understanding of semantics of p-code instructions. 
 
 + COPY
 + LOAD
