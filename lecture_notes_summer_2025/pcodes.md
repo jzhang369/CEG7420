@@ -117,6 +117,11 @@ You can easily view raw P-Code instructions directly from Ghidra’s GUI. Altern
 
 
 ```python
+
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
 cnt = 0
 myListing = currentProgram.getListing()
 instructionIterator = myListing.getInstructions(True)
@@ -162,8 +167,8 @@ Here are some methods in `PcodeOp` that retrieve information of p-code operators
 + `getOpcode(String s)`: get the integer value for a specific pcode opcode in string.
 
 ```python
-# For P-Code Demo
-# @category: CEG7420.Demo
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
 # @author: Junjie Zhang
 
 cnt = 0
@@ -189,8 +194,8 @@ print("the opcode integer for INT_EQUAL is {}".format(pcode.getOpcode("INT_EQUAL
 You can use the staic filds in `PCodeOp` class to get p-code operations with a specific opcode type, e.g., `PcodeOp.CALL`. Please do not forget to import `PcodeOp` from the package.  
 
 ```python
-# For P-Code Demo
-# @category: CEG7420.Demo
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
 # @author: Junjie Zhang
 
 #to only print p-code operations that are CALL p-code operators
@@ -222,8 +227,8 @@ Ghidra defines four types of address spaces:
 Here is a code snippet to explore varnodes. 
 
 ```python
-# For P-Code Demo
-# @category: CEG7420.Demo
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
 # @author: Junjie Zhang
 
 #to explore varnode methods and display the information
@@ -264,6 +269,10 @@ for inst in instructionIterator:
 We have explored this in previous sections, i.e., using the `getPcode()` method of the `instruction` class. For example, you can use the following code snippet (incomplete). 
 
 ```python
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
 # inst is an assembly instruction
 for inst in instructionIterator:
     #using getPcode(), you will get a list of pcode operations.
@@ -278,6 +287,10 @@ Every p-code operation is associated with the original machine/assembly instruct
 
 1. A sequence number contains **the address** of the original assembly instruction the pcode operation originates from.  
 1. A sequence number also contains a counter. For a single instruction, a **1-up counter**, starting at zero, is used to enumerate the multiple p-code operations involved in its translation.
+
+In the `SequenceNumber` class, you can use
++ `getTarget()`: to get the `address`.
++ `getOrder()`: to get the counter. 
 
 ```python
 # For P-Code Demo
@@ -297,8 +310,8 @@ for inst in instructionIterator:
     	seq = pcode.getSeqnum()
     	print("\t\tseq number: {}".format(seq))
     	print("\t\t\taddress of the assembly instruction this pcode is from: {}".format(seq.getTarget()))	
-
 ```
+
 ## Refined P-Code
 
 For all examples we have discussed before this section, they are for **raw p-code** or **low p-code**. Here we will focus on refined p-code. 
@@ -357,8 +370,8 @@ else:
 You will need to firstly decompile a function before you can retrieve refined p-code instructions from the binary. This is fundamentally different from raw p-code instructions, which can be directly translated from assembly instructions. 
 
 ```python
-# For Refined P-Code Demo
-# @category: CEG7420.Demo
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
 # @author: Junjie Zhang
 
 from ghidra.app.decompiler import *
@@ -391,8 +404,8 @@ for op in pcode_seq:
 Refined P-code instructions are obtained after decompilation. Each varnode in refined p-code instructions can be associated with a variable in the decompiled source code (e.g., in c/c++). The following code shows you how to retrieve the source-level information of a varnode in a refined p-code instruction. Here we print out the variable names in decompiled code for varnodes used as function parameters. 
 
 ```python
-# For Refined P-Code Demo
-# @category: CEG7420.Demo
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
 # @author: Junjie Zhang
 
 from ghidra.app.decompiler import *
@@ -461,8 +474,8 @@ If you are exploring this instruction `w1 = x1 + x2`, and you get the `x1` varia
 It helps tracking how data flows in a program by iteratively exploring the definition or descendants of a varnode. For every varnode in each refined p-code instruction, we display its definition instruction and all instructions that use it as input. 
 
 ```python
-# For Refined P-Code Demo
-# @category: CEG7420.Demo
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
 # @author: Junjie Zhang
 
 from ghidra.app.decompiler import *
@@ -509,3 +522,21 @@ for op in pcode_seq:
         for i in inst_descendants:
             print("\t\t It is used by: {}".format(i))
 ```
+
+## Applications
+### DecompilerUtils Slicing Methods
++ `getBackwardSlice(Varnode Seed)` 
++ `getForwardSlice(Varnode Seed)`
++ `getBackwardSliceToPCodeOps(Varnode Seed)` 
++ `getBackwardSliceToPCodeOps(Varnode Seed)`
+
+```python
+# Ghidra Scripting: PCode 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
+from ghidra.app.decompiler.component import DecompilerUtils
+myDecompUtil = DecompilerUtils
+```
+
+### The Data Flow Visualization in Ghidra
