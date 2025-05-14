@@ -6,7 +6,6 @@
 
 P-code is Ghidra’s intermediate representation (IR) used to abstract (a.k.a "lift") assembly instructions across different CPU architectures. It simplifies analysis and enables automated reverse engineering by explicitly representing instruction semantics.
 
-
 P-code offers a few unique advantages for reverse engineering and program analysis:
 + **Architecture Abstraction**: Provides a uniform representation across different CPU architectures.
 + **Explicit Side-Effects**: Clearly represents side-effects of assembly instructions that may not be immediately apparent.
@@ -19,6 +18,7 @@ The following table illustrates how these features facilitate two critical progr
 |Architecture Abstraction|X|X|
 |Explicit Side-Effects|X||
 |Built-In Data Flow||X|
+
 
 ## Raw and Refined P-Codes ##
 
@@ -44,7 +44,6 @@ Ghidra defines two types of p-codes that share the same syntax but differ fundam
     - Introduces cleaner expressions and temporary variables.
     - In Static Single Assignment (SSA) form
     - Aids in reconstructing functions, loops, and conditionals.
-
 
 ```mermaid
 graph BT
@@ -83,20 +82,20 @@ graph BT
 | **Human readability**| Low                         | High                        |
 | **In SSA form?**     | No                   | Yes                      |
 
+
 ## **Where to Find More Information?**
 
-P-Code Overview:
+**P-Code Overview**:
 
 /docs/languages/index.html
 
-Raw P-Code:
+**Raw P-Code**:
 
 /docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOp.html
 
-Refined P-Code:
+**Refined P-Code**:
 
 /docs/GhidraAPI_javadoc/api/ghidra/program/model/pcode/PcodeOpAST.html
-
 
 
 ## **P-Code Syntax**
@@ -106,6 +105,7 @@ A p-code operation is the analog of a machine instruction.
   + **mnemonic**: the action taken by this instruction (e.g., `ADD`, `JMP`, and etc.). 
   + **oprand**: the input(s) and output of this instruction (e.g., a register, a memory address, and etc.)
   + **side effects**: a machine instruction may have side effects (e.g., by implicitly changing flag registers.)
+
 + A p-code operation
   + **opcode**: the action taken by this p-code operation
   + **varnode**: the input(s) and output of this p-code operation. 
@@ -113,12 +113,8 @@ A p-code operation is the analog of a machine instruction.
 
 You can easily view raw P-Code instructions directly from Ghidra’s GUI. Alternatively, you can extract them programmatically using a simple script, such as the one below.
 
-
-
-
 ```python
-
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
@@ -132,16 +128,18 @@ for inst in instructionIterator:
     pcodeList = inst.getPcode()
     print("{}".format(inst))
     for pcode in pcodeList:
-      print("  {}".format(pcode))
+      print("\t\t{}".format(pcode))
 ```
-
-**Question:** Are these p-code operations raw p-codes or refined p-codes?
+**Question:** Are these p-code instructions raw p-codes or refined p-codes?
 
 **Answer:** They are raw p-codes directly translated from assembly instructions. 
 
 As we can find from the outputs, each of these p-code operations include a p-code opcode/operator, an output if existing, and zero or more inputs. 
 
 ### **P-Code Opcode**
+
+From [/docs/languages/index.html](https://spinsel.dev/assets/2020-06-17-ghidra-brainfuck-processor-1/ghidra_docs/language_spec/html/pcodedescription.html), you can find the detailed description of various p-code opcodes, which will be essential to the understanding of semantics of p-code instructions. 
+
 
 From [/docs/languages/index.html](https://spinsel.dev/assets/2020-06-17-ghidra-brainfuck-processor-1/ghidra_docs/language_spec/html/pcodedescription.html), you can find the detailed description of various p-code opcodes, which will be essential to the understanding of semantics of p-code instructions. 
 
@@ -160,14 +158,15 @@ From [/docs/languages/index.html](https://spinsel.dev/assets/2020-06-17-ghidra-b
 + INT_LESSEQUAL: This is an unsigned integer comparison operator.
 + INT_SLESSEQUAL: This is a signed integer comparison operator. 
 
-Here are some methods in `PcodeOp` that retrieve information of p-code operators/opcodes. 
+Here are some methods in `PcodeOp` that retrieve information of p-code operators/opcodes.
++ `getOpcode()`: get the integer value for this pcode opcode.  
 + `getMnemonic()`: get the string representation of the pcode opcode. 
-+ `getMnemonic(int op)`: get the string representation of for the integer value of a specific pcode opcode.
-+ `getOpcode()`: get the integer value for this pcode opcode. 
-+ `getOpcode(String s)`: get the integer value for a specific pcode opcode in string.
++ `getMnemonic(int op)`: this is a static method to get the string representation of for the integer value of a specific pcode opcode.
++ `getOpcode(String s)`: this is a static method get the integer value for a specific pcode opcode in string.
+
 
 ```python
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
@@ -191,47 +190,42 @@ print("the opcode integer for INT_EQUAL is {}".format(pcode.getOpcode("INT_EQUAL
 ```
 
 
-You can use the staic filds in `PCodeOp` class to get p-code operations with a specific opcode type, e.g., `PcodeOp.CALL`. Please do not forget to import `PcodeOp` from the package.  
-
 ```python
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
-#to only print p-code operations that are CALL p-code operators
+#to only print p-code instructions that are `CALL` p-code operators/opcodes
+
 from ghidra.program.model.pcode import PcodeOp
 cnt = 0
 myListing = currentProgram.getListing()
 instructionIterator = myListing.getInstructions(True)
 for inst in instructionIterator:
     pcodeList = inst.getPcode()
-    print("{}".format(inst))
     for pcode in pcodeList:
     	if pcode.getOpcode() == PcodeOp.CALL:
-    		print("\t{}".format(pcode))
+    		print(pcode)
 ```
-
-
 
 ### **P-Code Varnodes**
 
 Each input or output is a **varnode**, where **a varnode is a triple of an address space, an offset into the space, and a size. It refers to a contiguous seqeunce of bytes (defined by the size) startting from the offset in address space**.
 
-Ghidra defines four types of address spaces:
+Ghidra defines five types of address spaces:
 + **ram**: this varnode is in memory. Memory addressable by the program. For example, `BRANCH` and `CBRANCH` can use it, to indicate the address of the execution target.
 + **register**: this varnode is in a register.
 + **constant**: this varnode is a constant value (i.e., an immediate value). 
 + **unique** (a.k.a., temporary): this varnode is a temporary node and it does not exist anywhere.
 + **stack**: for varnodes in refined p-code instructions. 
 
-Here is a code snippet to explore varnodes. 
-
 ```python
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
-#to explore varnode methods and display the information
+#to explore varnodes
+
 from ghidra.program.model.pcode import PcodeOp
 cnt = 0
 myListing = currentProgram.getListing()
@@ -250,7 +244,6 @@ for inst in instructionIterator:
     		print("\t\t\tRegister Space?: {}".format(output.isRegister()))
     		print("\t\t\tTemporary/Unique Space?: {}".format(output.isUnique()))
     		print("\t\t\tOffset: {}, with size: {}".format(output.getOffset(), output.getSize()))
-    		print("\t\t\tInteger Value for The Space: {}".format(output.getSpace()))
     	for vn in inputs:
     		print("\t\tinput: {}".format(vn))
     		print("\t\t\tRam/Address Space?: {}".format(vn.isAddress()))
@@ -258,27 +251,6 @@ for inst in instructionIterator:
     		print("\t\t\tRegister Space?: {}".format(vn.isRegister()))
     		print("\t\t\tTemporary/Unique Space?: {}".format(vn.isUnique()))
     		print("\t\t\tOffset: {}, with size: {}".format(vn.getOffset(), vn.getSize()))
-    		print("\t\t\tInteger Value for The Space: {}".format(vn.getSpace()))
-```
-
-
-## Mapping Between Assembly Instructions and P-Code Operations
-
-### **From Assembly to P-Code**
-
-We have explored this in previous sections, i.e., using the `getPcode()` method of the `instruction` class. For example, you can use the following code snippet (incomplete). 
-
-```python
-# Ghidra Scripting: PCode 
-# @category: GhidraScripting 
-# @author: Junjie Zhang
-
-# inst is an assembly instruction
-for inst in instructionIterator:
-    #using getPcode(), you will get a list of pcode operations.
-    pcodeList = inst.getPcode()  
-    print("{}".format(inst))
-    for pcode in pcodeList:
 ```
 
 ## Mapping Between Assembly Instructions and P-Code Instructions
@@ -292,17 +264,22 @@ We have explored this in previous sections, i.e., using the `getPcode()` method 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
-# inst is an assembly instruction
+from ghidra.program.model.pcode import PcodeOp
+myListing = currentProgram.getListing()
+instructionIterator = myListing.getInstructions(True)
 for inst in instructionIterator:
     #using getPcode(), you will get a list of pcode operations.
     pcodeList = inst.getPcode()  
     print("{}".format(inst))
     for pcode in pcodeList:
+      print(pcode)
 ```
 
 ### **From RAW/Refined P-Code to Assembly**
 
-Every p-code instruction is associated with the original machine/assembly instruction where it originates from. It should be made clear that one machine/assembley instruction is typically translated into one p-code instruction or a sequence of p-code instruction. Each p-code instruction is uniquely identified by its **sequence number**. 
+Every p-code instruction is associated with the original machine/assembly instruction where it originates from. It should be made clear that one machine/assembley instruction is typically translated into one p-code instruction or a sequence of p-code instruction. Each p-code instruction is uniquely identified by its **sequence number**.
+
+You can use `getSeqnum()` to get an instance of the `sequencenumber` class. And then you can use the following methods:
 
 1. `getTarget()`: returns the address of the assembley instruction from which this P-Code instruction is coming. 
    + A sequence number contains **the address** of the original assembly instruction the pcode instruction originates from.  
@@ -327,22 +304,15 @@ for inst in instructionIterator:
     	print("\t\t\taddress of the assembly instruction this pcode is from: {} with the index of {}".format(seq.getTarget(), seq.getTime()))	
 ```
 
-
-
 ## Refined P-Code
 
-For all examples we have discussed before this section, they are for **raw p-code** or **low p-code**. Here we will focus on refined p-code. 
+For all examples we have discussed before this section, they are for **raw P-Code** or **low P-Code**. Here we will focus on refined **P-Code**.
 
 ### SSA 
-Refined p-codes are represented in **Static Single Assignment (SSA)** form; raw p-codes are NOT represented in SSA. A key property of SSA is that:
+Refined p-codes are represented in **Static Single Assignment (SSA)** form; raw p-codes are NOT represented in SSA. A key property of SSA is that it will ensure **every variable is assigned exactly once**.
 
-- Ensures **every variable is assigned exactly once**.
 - Introduces new unique versions (e.g., `tmp1`, `tmp2`, etc.) for each assignment.
 - Makes **data flow analysis**, **value tracking**, and **optimization** easier.
-  
-SSA simplifies the reasoning about program state, facilitating taint analysis and symbolic execution. 
-
-SSA Examples (Yes/No?):
 
 ```python
 # Yes or No? 
@@ -350,6 +320,7 @@ SSA Examples (Yes/No?):
 x = 5
 x = x + 2
 x = x * 3
+return x
 ```
 
 ```python
@@ -358,6 +329,7 @@ x = x * 3
 x1 = 5
 x2 = x1 + 2
 x3 = x2 * 3
+return x3
 ```
 
 ```python
@@ -367,9 +339,8 @@ if (cond):
     x = 1
 else:
     x = 2
-    y = x + 3
+y = x + 3
 ```
-
 
 ```python
 # Yes or No?
@@ -378,8 +349,8 @@ if (cond):
     x1 = 1
 else:
     x2 = 2
-    x3 = phi(x1, x2)
-    y1 = x3 + 3
+x3 = phi(x1, x2)
+y1 = x3 + 3
 ```
 
 ### Retrieving Refined P-Code Using Ghidra
@@ -387,7 +358,7 @@ else:
 You will need to firstly decompile a function before you can retrieve refined p-code instructions from the binary. This is fundamentally different from raw p-code instructions, which can be directly translated from assembly instructions. 
 
 ```python
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
@@ -413,7 +384,6 @@ if results_highFunction is None:
     exit()
 
 pcode_seq = results_highFunction.getPcodeOps() # This pcode_seq is refined pcode!
-cnt = 0
 for op in pcode_seq:
     print("{}".format(op.toString()))
 ```
@@ -421,11 +391,13 @@ for op in pcode_seq:
 Refined P-code instructions are obtained after decompilation. Each varnode in refined p-code instructions can be associated with a variable in the decompiled source code (e.g., in c/c++). The following code shows you how to retrieve the source-level information of a varnode in a refined p-code instruction. Here we print out the variable names in decompiled code for varnodes used as function parameters. 
 
 ```python
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
 from ghidra.app.decompiler import *
+
+paramSet = set()
 
 # We will get refined p-code for the current function.
 func = getFunctionContaining(currentAddress)
@@ -445,8 +417,6 @@ results_highFunction = decomp_results.getHighFunction()
 if results_highFunction is None:
     print("Fail to get the high function.")
     exit()
-
-paramSet = set()
 
 pcode_seq = results_highFunction.getPcodeOps() # This pcode_seq is refined pcode!
 
@@ -460,13 +430,14 @@ for op in pcode_seq:
             if hs and hs.isParameter():
                 paramSet.add(invar)
 
+
 print("all varnodes in refined pcode that are identified as parameters.")
 for invar in paramSet:
     hv = invar.getHigh()
     if hv:
-        hs = hv.getSymbol()
+        hs = hv.getSymbol() 
         if hs:
-            print("varnode: {}, high variable name: {}, symbol name: {}".format(invar, hv.getName(), hs.getName()))
+            print("varnode: {}, high variable name: {} with type {}, symbol name: {}".format(invar, hv.getName(), hv.getDataType(), hs.getName()))
 ```
 
 ### `getDef()` and `getDescendants()`
@@ -487,11 +458,12 @@ w1 = x1 + x2
 If you are exploring this instruction `w1 = x1 + x2`, and you get the `x1` variable/varnode in this instruction. 
 + if you call `x1.getDef()`, you should get the definition of `x1`, i.e., the instruction that writes into `x1`. In other words,  `x1.getDef()` should return `x1 = 1`.
 + if you call `x1.getDescendants()`, you should get a list of all instructions that use `x1` as the input. In other words,  `x1.getDescendants()` should return `y1 = x1 + 5` and `w1 = x1 + x2`, where both of them use `x1` as input.  
-
+  
 It helps tracking how data flows in a program by iteratively exploring the definition or descendants of a varnode. For every varnode in each refined p-code instruction, we display its definition instruction and all instructions that use it as input. 
 
+
 ```python
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
@@ -545,10 +517,10 @@ for op in pcode_seq:
 + `getBackwardSlice(Varnode Seed)` 
 + `getForwardSlice(Varnode Seed)`
 + `getBackwardSliceToPCodeOps(Varnode Seed)` 
-+ `getBackwardSliceToPCodeOps(Varnode Seed)`
++ `getForwardSliceToPCodeOps(Varnode Seed)`
 
 ```python
-# Ghidra Scripting: PCode 
+# Ghidra Scripting: P-Code 
 # @category: GhidraScripting 
 # @author: Junjie Zhang
 
