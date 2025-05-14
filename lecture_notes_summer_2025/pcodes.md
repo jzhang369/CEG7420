@@ -281,25 +281,40 @@ for inst in instructionIterator:
     for pcode in pcodeList:
 ```
 
-### **From P-Code to Assembly**
+## Mapping Between Assembly Instructions and P-Code Instructions
 
-Every p-code operation is associated with the original machine/assembly instruction where it originates from. It should be made clear that one machine instruction is typically translated into one p-code operation or a sequence of p-code operations. Each p-code operation is uniquely identified by its **sequence number**. 
+### **From Assembly to *RAW* P-Code**
 
-1. A sequence number contains **the address** of the original assembly instruction the pcode operation originates from.  
-1. A sequence number also contains a counter. For a single instruction, a **1-up counter**, starting at zero, is used to enumerate the multiple p-code operations involved in its translation.
-
-In the `SequenceNumber` class, you can use
-+ `getTarget()`: to get the `address`.
-+ `getOrder()`: to get the counter. 
+We have explored this in previous sections, i.e., using the `getPcode()` method of the `instruction` class. For example, you can use the following code snippet (incomplete). 
 
 ```python
-# For P-Code Demo
-# @category: CEG7420.Demo
+# Ghidra Scripting: P-Code 
+# @category: GhidraScripting 
 # @author: Junjie Zhang
 
-#for a pcode operation, you can find out the address of the assembly instruction, from which this pcode is corresponding to
+# inst is an assembly instruction
+for inst in instructionIterator:
+    #using getPcode(), you will get a list of pcode operations.
+    pcodeList = inst.getPcode()  
+    print("{}".format(inst))
+    for pcode in pcodeList:
+```
+
+### **From RAW/Refined P-Code to Assembly**
+
+Every p-code instruction is associated with the original machine/assembly instruction where it originates from. It should be made clear that one machine/assembley instruction is typically translated into one p-code instruction or a sequence of p-code instruction. Each p-code instruction is uniquely identified by its **sequence number**. 
+
+1. `getTarget()`: returns the address of the assembley instruction from which this P-Code instruction is coming. 
+   + A sequence number contains **the address** of the original assembly instruction the pcode instruction originates from.  
+2. `getTime()`: returns the counter value (i.e., the index) of this P-Code instruction among all instructions translated from the assembley instruction. 
+   + A sequence number also contains a counter. For a single instruction, a **1-up counter**, starting at zero, is used to enumerate the multiple p-code operations involved in its translation.
+  
+```python
+# Ghidra Scripting: P-Code 
+# @category: GhidraScripting 
+# @author: Junjie Zhang
+
 from ghidra.program.model.pcode import PcodeOp
-cnt = 0
 myListing = currentProgram.getListing()
 instructionIterator = myListing.getInstructions(True)
 for inst in instructionIterator:
@@ -309,8 +324,10 @@ for inst in instructionIterator:
     	print("\t{}".format(pcode))
     	seq = pcode.getSeqnum()
     	print("\t\tseq number: {}".format(seq))
-    	print("\t\t\taddress of the assembly instruction this pcode is from: {}".format(seq.getTarget()))	
+    	print("\t\t\taddress of the assembly instruction this pcode is from: {} with the index of {}".format(seq.getTarget(), seq.getTime()))	
 ```
+
+
 
 ## Refined P-Code
 
