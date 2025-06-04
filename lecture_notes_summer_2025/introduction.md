@@ -1,5 +1,7 @@
 # **Ghidra Scripting: Introduction to Ghidra Programming**
 
+## By [**Dr. Junjie Zhang**](https://jzhang369.github.io/)
+
 ## **Why Ghidra Scripting Matters?**
 
 Ghidra scripting allows reverse engineers to automate common analysis tasks, reduce manual work, and explore deeper program semantics using custom scripts. With scripting, users can create:
@@ -67,3 +69,9 @@ print("Hello World!")
 ```
 
 Load this folder into Ghidra. 
+
+## **Summary**
+
++ Ghidra scripting provides flexible, programmable analysis of binaries.
++ You can write and run scripts in GUI or headless mode.
++ Ghidra also supports third-party integration with libraries like `PyGhidra`.
